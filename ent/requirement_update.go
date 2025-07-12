@@ -41,6 +41,34 @@ func (ru *RequirementUpdate) SetNillableTitle(s *string) *RequirementUpdate {
 	return ru
 }
 
+// SetPath sets the "path" field.
+func (ru *RequirementUpdate) SetPath(s string) *RequirementUpdate {
+	ru.mutation.SetPath(s)
+	return ru
+}
+
+// SetNillablePath sets the "path" field if the given value is not nil.
+func (ru *RequirementUpdate) SetNillablePath(s *string) *RequirementUpdate {
+	if s != nil {
+		ru.SetPath(*s)
+	}
+	return ru
+}
+
+// SetDescription sets the "description" field.
+func (ru *RequirementUpdate) SetDescription(s string) *RequirementUpdate {
+	ru.mutation.SetDescription(s)
+	return ru
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (ru *RequirementUpdate) SetNillableDescription(s *string) *RequirementUpdate {
+	if s != nil {
+		ru.SetDescription(*s)
+	}
+	return ru
+}
+
 // Mutation returns the RequirementMutation object of the builder.
 func (ru *RequirementUpdate) Mutation() *RequirementMutation {
 	return ru.mutation
@@ -80,6 +108,11 @@ func (ru *RequirementUpdate) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Requirement.title": %w`, err)}
 		}
 	}
+	if v, ok := ru.mutation.Path(); ok {
+		if err := requirement.PathValidator(v); err != nil {
+			return &ValidationError{Name: "path", err: fmt.Errorf(`ent: validator failed for field "Requirement.path": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -87,7 +120,7 @@ func (ru *RequirementUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ru.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeUUID))
 	if ps := ru.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -97,6 +130,12 @@ func (ru *RequirementUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.Title(); ok {
 		_spec.SetField(requirement.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := ru.mutation.Path(); ok {
+		_spec.SetField(requirement.FieldPath, field.TypeString, value)
+	}
+	if value, ok := ru.mutation.Description(); ok {
+		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -128,6 +167,34 @@ func (ruo *RequirementUpdateOne) SetTitle(s string) *RequirementUpdateOne {
 func (ruo *RequirementUpdateOne) SetNillableTitle(s *string) *RequirementUpdateOne {
 	if s != nil {
 		ruo.SetTitle(*s)
+	}
+	return ruo
+}
+
+// SetPath sets the "path" field.
+func (ruo *RequirementUpdateOne) SetPath(s string) *RequirementUpdateOne {
+	ruo.mutation.SetPath(s)
+	return ruo
+}
+
+// SetNillablePath sets the "path" field if the given value is not nil.
+func (ruo *RequirementUpdateOne) SetNillablePath(s *string) *RequirementUpdateOne {
+	if s != nil {
+		ruo.SetPath(*s)
+	}
+	return ruo
+}
+
+// SetDescription sets the "description" field.
+func (ruo *RequirementUpdateOne) SetDescription(s string) *RequirementUpdateOne {
+	ruo.mutation.SetDescription(s)
+	return ruo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (ruo *RequirementUpdateOne) SetNillableDescription(s *string) *RequirementUpdateOne {
+	if s != nil {
+		ruo.SetDescription(*s)
 	}
 	return ruo
 }
@@ -184,6 +251,11 @@ func (ruo *RequirementUpdateOne) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Requirement.title": %w`, err)}
 		}
 	}
+	if v, ok := ruo.mutation.Path(); ok {
+		if err := requirement.PathValidator(v); err != nil {
+			return &ValidationError{Name: "path", err: fmt.Errorf(`ent: validator failed for field "Requirement.path": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -191,7 +263,7 @@ func (ruo *RequirementUpdateOne) sqlSave(ctx context.Context) (_node *Requiremen
 	if err := ruo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeUUID))
 	id, ok := ruo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Requirement.id" for update`)}
@@ -218,6 +290,12 @@ func (ruo *RequirementUpdateOne) sqlSave(ctx context.Context) (_node *Requiremen
 	}
 	if value, ok := ruo.mutation.Title(); ok {
 		_spec.SetField(requirement.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := ruo.mutation.Path(); ok {
+		_spec.SetField(requirement.FieldPath, field.TypeString, value)
+	}
+	if value, ok := ruo.mutation.Description(); ok {
+		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
 	}
 	_node = &Requirement{config: ruo.config}
 	_spec.Assign = _node.assignValues

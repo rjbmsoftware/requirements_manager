@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 // Client is the client that holds all ent builders.
@@ -258,7 +259,7 @@ func (c *RequirementClient) UpdateOne(r *Requirement) *RequirementUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *RequirementClient) UpdateOneID(id int) *RequirementUpdateOne {
+func (c *RequirementClient) UpdateOneID(id uuid.UUID) *RequirementUpdateOne {
 	mutation := newRequirementMutation(c.config, OpUpdateOne, withRequirementID(id))
 	return &RequirementUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -275,7 +276,7 @@ func (c *RequirementClient) DeleteOne(r *Requirement) *RequirementDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *RequirementClient) DeleteOneID(id int) *RequirementDeleteOne {
+func (c *RequirementClient) DeleteOneID(id uuid.UUID) *RequirementDeleteOne {
 	builder := c.Delete().Where(requirement.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -292,12 +293,12 @@ func (c *RequirementClient) Query() *RequirementQuery {
 }
 
 // Get returns a Requirement entity by its id.
-func (c *RequirementClient) Get(ctx context.Context, id int) (*Requirement, error) {
+func (c *RequirementClient) Get(ctx context.Context, id uuid.UUID) (*Requirement, error) {
 	return c.Query().Where(requirement.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *RequirementClient) GetX(ctx context.Context, id int) *Requirement {
+func (c *RequirementClient) GetX(ctx context.Context, id uuid.UUID) *Requirement {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

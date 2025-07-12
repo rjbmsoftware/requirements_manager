@@ -9,15 +9,20 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 // Requirement is the model entity for the Requirement schema.
 type Requirement struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// Title holds the value of the "title" field.
-	Title        string `json:"title,omitempty"`
+	Title string `json:"title,omitempty"`
+	// Path holds the value of the "path" field.
+	Path string `json:"path,omitempty"`
+	// Description holds the value of the "description" field.
+	Description  string `json:"description,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -26,10 +31,10 @@ func (*Requirement) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case requirement.FieldID:
-			values[i] = new(sql.NullInt64)
-		case requirement.FieldTitle:
+		case requirement.FieldTitle, requirement.FieldPath, requirement.FieldDescription:
 			values[i] = new(sql.NullString)
+		case requirement.FieldID:
+			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -46,16 +51,28 @@ func (r *Requirement) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case requirement.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				r.ID = *value
 			}
-			r.ID = int(value.Int64)
 		case requirement.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
 				r.Title = value.String
+			}
+		case requirement.FieldPath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field path", values[i])
+			} else if value.Valid {
+				r.Path = value.String
+			}
+		case requirement.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				r.Description = value.String
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -95,6 +112,12 @@ func (r *Requirement) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
 	builder.WriteString("title=")
 	builder.WriteString(r.Title)
+	builder.WriteString(", ")
+	builder.WriteString("path=")
+	builder.WriteString(r.Path)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(r.Description)
 	builder.WriteByte(')')
 	return builder.String()
 }

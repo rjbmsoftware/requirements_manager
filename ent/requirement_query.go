@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // RequirementQuery is the builder for querying Requirement entities.
@@ -82,8 +83,8 @@ func (rq *RequirementQuery) FirstX(ctx context.Context) *Requirement {
 
 // FirstID returns the first Requirement ID from the query.
 // Returns a *NotFoundError when no Requirement ID was found.
-func (rq *RequirementQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RequirementQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -95,7 +96,7 @@ func (rq *RequirementQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *RequirementQuery) FirstIDX(ctx context.Context) int {
+func (rq *RequirementQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -133,8 +134,8 @@ func (rq *RequirementQuery) OnlyX(ctx context.Context) *Requirement {
 // OnlyID is like Only, but returns the only Requirement ID in the query.
 // Returns a *NotSingularError when more than one Requirement ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *RequirementQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RequirementQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -150,7 +151,7 @@ func (rq *RequirementQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *RequirementQuery) OnlyIDX(ctx context.Context) int {
+func (rq *RequirementQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,7 +179,7 @@ func (rq *RequirementQuery) AllX(ctx context.Context) []*Requirement {
 }
 
 // IDs executes the query and returns a list of Requirement IDs.
-func (rq *RequirementQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (rq *RequirementQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if rq.ctx.Unique == nil && rq.path != nil {
 		rq.Unique(true)
 	}
@@ -190,7 +191,7 @@ func (rq *RequirementQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *RequirementQuery) IDsX(ctx context.Context) []int {
+func (rq *RequirementQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -365,7 +366,7 @@ func (rq *RequirementQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (rq *RequirementQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(requirement.Table, requirement.Columns, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeUUID))
 	_spec.From = rq.sql
 	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

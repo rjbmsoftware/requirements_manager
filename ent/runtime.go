@@ -5,6 +5,8 @@ package ent
 import (
 	"requirements/ent/requirement"
 	"requirements/ent/schema"
+
+	"github.com/google/uuid"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -17,4 +19,16 @@ func init() {
 	requirementDescTitle := requirementFields[0].Descriptor()
 	// requirement.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	requirement.TitleValidator = requirementDescTitle.Validators[0].(func(string) error)
+	// requirementDescPath is the schema descriptor for path field.
+	requirementDescPath := requirementFields[1].Descriptor()
+	// requirement.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	requirement.PathValidator = requirementDescPath.Validators[0].(func(string) error)
+	// requirementDescDescription is the schema descriptor for description field.
+	requirementDescDescription := requirementFields[3].Descriptor()
+	// requirement.DefaultDescription holds the default value on creation for the description field.
+	requirement.DefaultDescription = requirementDescDescription.Default.(string)
+	// requirementDescID is the schema descriptor for id field.
+	requirementDescID := requirementFields[2].Descriptor()
+	// requirement.DefaultID holds the default value on creation for the id field.
+	requirement.DefaultID = requirementDescID.Default.(func() uuid.UUID)
 }

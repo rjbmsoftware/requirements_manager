@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"requirements/ent"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -16,13 +16,14 @@ type Handler struct {
 
 func (h *Handler) GetRequirementById(c echo.Context) error {
 	id := c.Param("id")
-	i, err := strconv.Atoi(id)
+
+	parsedId, err := uuid.Parse(id)
 	if err != nil {
-		log.Println("Requirement GET invalid id")
+		log.Printf("Requirement GET invalid id: %s", id)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 
-	requirement, err := h.DB.Requirement.Get(context.Background(), i)
+	requirement, err := h.DB.Requirement.Get(context.Background(), parsedId)
 	if err != nil {
 		log.Println("Could not find requirement")
 		return c.NoContent(http.StatusNotFound)
@@ -33,7 +34,9 @@ func (h *Handler) GetRequirementById(c echo.Context) error {
 
 func (h *Handler) CreateRequirement(c echo.Context) error {
 	var req struct {
-		Title string `json:"title"`
+		Title       string `json:"title"`
+		Path        string `json:"path"`
+		Description string `json:"description"`
 	}
 	if err := c.Bind(&req); err != nil {
 		log.Println(err)
@@ -43,6 +46,8 @@ func (h *Handler) CreateRequirement(c echo.Context) error {
 	created, err := h.DB.Requirement.
 		Create().
 		SetTitle(req.Title).
+		SetPath(req.Path).
+		SetDescription(req.Description).
 		Save(context.Background())
 
 	if err != nil {

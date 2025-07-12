@@ -12,6 +12,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 const (
@@ -31,8 +32,10 @@ type RequirementMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *uuid.UUID
 	title         *string
+	_path         *string
+	description   *string
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*Requirement, error)
@@ -59,7 +62,7 @@ func newRequirementMutation(c config, op Op, opts ...requirementOption) *Require
 }
 
 // withRequirementID sets the ID field of the mutation.
-func withRequirementID(id int) requirementOption {
+func withRequirementID(id uuid.UUID) requirementOption {
 	return func(m *RequirementMutation) {
 		var (
 			err   error
@@ -109,9 +112,15 @@ func (m RequirementMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Requirement entities.
+func (m *RequirementMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *RequirementMutation) ID() (id int, exists bool) {
+func (m *RequirementMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -122,12 +131,12 @@ func (m *RequirementMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *RequirementMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *RequirementMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -173,6 +182,78 @@ func (m *RequirementMutation) ResetTitle() {
 	m.title = nil
 }
 
+// SetPath sets the "path" field.
+func (m *RequirementMutation) SetPath(s string) {
+	m._path = &s
+}
+
+// Path returns the value of the "path" field in the mutation.
+func (m *RequirementMutation) Path() (r string, exists bool) {
+	v := m._path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPath returns the old "path" field's value of the Requirement entity.
+// If the Requirement object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RequirementMutation) OldPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPath: %w", err)
+	}
+	return oldValue.Path, nil
+}
+
+// ResetPath resets all changes to the "path" field.
+func (m *RequirementMutation) ResetPath() {
+	m._path = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *RequirementMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RequirementMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Requirement entity.
+// If the Requirement object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RequirementMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RequirementMutation) ResetDescription() {
+	m.description = nil
+}
+
 // Where appends a list predicates to the RequirementMutation builder.
 func (m *RequirementMutation) Where(ps ...predicate.Requirement) {
 	m.predicates = append(m.predicates, ps...)
@@ -207,9 +288,15 @@ func (m *RequirementMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RequirementMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
 	if m.title != nil {
 		fields = append(fields, requirement.FieldTitle)
+	}
+	if m._path != nil {
+		fields = append(fields, requirement.FieldPath)
+	}
+	if m.description != nil {
+		fields = append(fields, requirement.FieldDescription)
 	}
 	return fields
 }
@@ -221,6 +308,10 @@ func (m *RequirementMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case requirement.FieldTitle:
 		return m.Title()
+	case requirement.FieldPath:
+		return m.Path()
+	case requirement.FieldDescription:
+		return m.Description()
 	}
 	return nil, false
 }
@@ -232,6 +323,10 @@ func (m *RequirementMutation) OldField(ctx context.Context, name string) (ent.Va
 	switch name {
 	case requirement.FieldTitle:
 		return m.OldTitle(ctx)
+	case requirement.FieldPath:
+		return m.OldPath(ctx)
+	case requirement.FieldDescription:
+		return m.OldDescription(ctx)
 	}
 	return nil, fmt.Errorf("unknown Requirement field %s", name)
 }
@@ -247,6 +342,20 @@ func (m *RequirementMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTitle(v)
+		return nil
+	case requirement.FieldPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPath(v)
+		return nil
+	case requirement.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Requirement field %s", name)
@@ -299,6 +408,12 @@ func (m *RequirementMutation) ResetField(name string) error {
 	switch name {
 	case requirement.FieldTitle:
 		m.ResetTitle()
+		return nil
+	case requirement.FieldPath:
+		m.ResetPath()
+		return nil
+	case requirement.FieldDescription:
+		m.ResetDescription()
 		return nil
 	}
 	return fmt.Errorf("unknown Requirement field %s", name)

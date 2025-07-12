@@ -10,8 +10,10 @@ import (
 var (
 	// RequirementsColumns holds the columns for the "requirements" table.
 	RequirementsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID},
 		{Name: "title", Type: field.TypeString},
+		{Name: "path", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Default: ""},
 	}
 	// RequirementsTable holds the schema information for the "requirements" table.
 	RequirementsTable = &schema.Table{

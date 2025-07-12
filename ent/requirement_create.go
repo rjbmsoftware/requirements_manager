@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // RequirementCreate is the builder for creating a Requirement entity.
@@ -25,6 +26,40 @@ func (rc *RequirementCreate) SetTitle(s string) *RequirementCreate {
 	return rc
 }
 
+// SetPath sets the "path" field.
+func (rc *RequirementCreate) SetPath(s string) *RequirementCreate {
+	rc.mutation.SetPath(s)
+	return rc
+}
+
+// SetDescription sets the "description" field.
+func (rc *RequirementCreate) SetDescription(s string) *RequirementCreate {
+	rc.mutation.SetDescription(s)
+	return rc
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rc *RequirementCreate) SetNillableDescription(s *string) *RequirementCreate {
+	if s != nil {
+		rc.SetDescription(*s)
+	}
+	return rc
+}
+
+// SetID sets the "id" field.
+func (rc *RequirementCreate) SetID(u uuid.UUID) *RequirementCreate {
+	rc.mutation.SetID(u)
+	return rc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (rc *RequirementCreate) SetNillableID(u *uuid.UUID) *RequirementCreate {
+	if u != nil {
+		rc.SetID(*u)
+	}
+	return rc
+}
+
 // Mutation returns the RequirementMutation object of the builder.
 func (rc *RequirementCreate) Mutation() *RequirementMutation {
 	return rc.mutation
@@ -32,6 +67,7 @@ func (rc *RequirementCreate) Mutation() *RequirementMutation {
 
 // Save creates the Requirement in the database.
 func (rc *RequirementCreate) Save(ctx context.Context) (*Requirement, error) {
+	rc.defaults()
 	return withHooks(ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
@@ -57,6 +93,18 @@ func (rc *RequirementCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (rc *RequirementCreate) defaults() {
+	if _, ok := rc.mutation.Description(); !ok {
+		v := requirement.DefaultDescription
+		rc.mutation.SetDescription(v)
+	}
+	if _, ok := rc.mutation.ID(); !ok {
+		v := requirement.DefaultID()
+		rc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (rc *RequirementCreate) check() error {
 	if _, ok := rc.mutation.Title(); !ok {
@@ -66,6 +114,17 @@ func (rc *RequirementCreate) check() error {
 		if err := requirement.TitleValidator(v); err != nil {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Requirement.title": %w`, err)}
 		}
+	}
+	if _, ok := rc.mutation.Path(); !ok {
+		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "Requirement.path"`)}
+	}
+	if v, ok := rc.mutation.Path(); ok {
+		if err := requirement.PathValidator(v); err != nil {
+			return &ValidationError{Name: "path", err: fmt.Errorf(`ent: validator failed for field "Requirement.path": %w`, err)}
+		}
+	}
+	if _, ok := rc.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Requirement.description"`)}
 	}
 	return nil
 }
@@ -81,8 +140,13 @@ func (rc *RequirementCreate) sqlSave(ctx context.Context) (*Requirement, error) 
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -91,11 +155,23 @@ func (rc *RequirementCreate) sqlSave(ctx context.Context) (*Requirement, error) 
 func (rc *RequirementCreate) createSpec() (*Requirement, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Requirement{config: rc.config}
-		_spec = sqlgraph.NewCreateSpec(requirement.Table, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(requirement.Table, sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeUUID))
 	)
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := rc.mutation.Title(); ok {
 		_spec.SetField(requirement.FieldTitle, field.TypeString, value)
 		_node.Title = value
+	}
+	if value, ok := rc.mutation.Path(); ok {
+		_spec.SetField(requirement.FieldPath, field.TypeString, value)
+		_node.Path = value
+	}
+	if value, ok := rc.mutation.Description(); ok {
+		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
+		_node.Description = value
 	}
 	return _node, _spec
 }
@@ -118,6 +194,7 @@ func (rcb *RequirementCreateBulk) Save(ctx context.Context) ([]*Requirement, err
 	for i := range rcb.builders {
 		func(i int, root context.Context) {
 			builder := rcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RequirementMutation)
 				if !ok {
@@ -144,10 +221,6 @@ func (rcb *RequirementCreateBulk) Save(ctx context.Context) ([]*Requirement, err
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})
