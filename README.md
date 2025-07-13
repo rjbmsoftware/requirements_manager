@@ -16,6 +16,7 @@ A way of grouping of and tracking requirements between systems
 
 ### Swagger docs
 
+- Accessed via http://localhost:8080/swagger/index.html
 - https://goswagger.io/go-swagger/reference/annotations/params/
 - https://github.com/swaggo/swag
 - go install github.com/swaggo/swag/cmd/swag@latest
