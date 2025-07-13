@@ -14,6 +14,15 @@ type Handler struct {
 	DB *ent.Client
 }
 
+//	@Summary		Get single requirement
+//	@Description	Get a single requirement by id
+//	@Produce		json
+//	@Router			/requirement/{id} [get]
+//	@Param			id	path		string	true	"id of the requirement"	Format(uuid)
+//	@Success		200	{object}	ent.Requirement
+//	@Failure		404
+//	@Failure		400
+//	@Failure		500
 func (h *Handler) GetRequirementById(c echo.Context) error {
 	id := c.Param("id")
 
@@ -32,12 +41,23 @@ func (h *Handler) GetRequirementById(c echo.Context) error {
 	return c.JSON(http.StatusCreated, requirement)
 }
 
+type CreateRequirementRequest struct {
+	Title       string `json:"title"`
+	Path        string `json:"path"`
+	Description string `json:"description"`
+}
+
+//	@Summary		Create a single requirement
+//	@Description	Create a single requirement
+//	@Accept			json
+//	@Param			request	body	CreateRequirementRequest	true	"Create requirement payload"
+//	@Produce		json
+//	@Router			/requirement [post]
+//	@Success		201	{object}	ent.Requirement
+//	@Failure		400
+//	@Failure		500
 func (h *Handler) CreateRequirement(c echo.Context) error {
-	var req struct {
-		Title       string `json:"title"`
-		Path        string `json:"path"`
-		Description string `json:"description"`
-	}
+	var req CreateRequirementRequest
 	if err := c.Bind(&req); err != nil {
 		log.Println(err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})

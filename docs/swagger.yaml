@@ -1,0 +1,83 @@
+definitions:
+  ent.Requirement:
+    properties:
+      description:
+        description: Description holds the value of the "description" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      path:
+        description: Path holds the value of the "path" field.
+        type: string
+      title:
+        description: Title holds the value of the "title" field.
+        type: string
+    type: object
+  requirements.CreateRequirementRequest:
+    properties:
+      description:
+        type: string
+      path:
+        type: string
+      title:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: A place to manage requirements
+  license:
+    name: MIT
+    url: https://mit-license.org/
+  title: Requirements manager
+  version: "1.0"
+paths:
+  /requirement:
+    post:
+      consumes:
+      - application/json
+      description: Create a single requirement
+      parameters:
+      - description: Create requirement payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requirements.CreateRequirementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Requirement'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Create a single requirement
+  /requirement/{id}:
+    get:
+      description: Get a single requirement by id
+      parameters:
+      - description: id of the requirement
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Requirement'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Get single requirement
+swagger: "2.0"
