@@ -57,6 +57,25 @@ paths:
           description: Internal Server Error
       summary: Create a single requirement
   /requirement/{id}:
+    delete:
+      description: Delete a single requirement by id
+      parameters:
+      - description: id of the requirement
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Delete single requirement
     get:
       description: Get a single requirement by id
       parameters:

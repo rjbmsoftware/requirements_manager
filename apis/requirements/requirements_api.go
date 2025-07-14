@@ -77,3 +77,25 @@ func (h *Handler) CreateRequirement(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, created)
 }
+
+//	@Summary		Delete single requirement
+//	@Description	Delete a single requirement by id
+//	@Produce		json
+//	@Router			/requirement/{id} [delete]
+//	@Param			id	path	string	true	"id of the requirement"	Format(uuid)
+//	@Success		204
+//	@Failure		400
+//	@Failure		500
+func (h *Handler) DeleteRequirement(c echo.Context) error {
+	id := c.Param("id")
+
+	parsedId, err := uuid.Parse(id)
+	if err != nil {
+		log.Printf("Requirement GET invalid id: %s", id)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	h.DB.Requirement.DeleteOneID(parsedId).Exec(context.Background())
+
+	return c.NoContent(http.StatusNoContent)
+}

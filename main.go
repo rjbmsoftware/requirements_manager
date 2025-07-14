@@ -21,8 +21,8 @@ import (
 //	@version		1.0
 //	@description	A place to manage requirements
 
-//	@license.name	MIT
-//	@license.url	https://mit-license.org/
+// @license.name	MIT
+// @license.url	https://mit-license.org/
 func main() {
 	client, err := ent.Open("sqlite3", "file:requirements.db?_fk=1")
 	if err != nil {
@@ -41,6 +41,7 @@ func main() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.GET("/requirement/:id", handler.GetRequirementById)
+	e.DELETE("/requirement/:id", handler.DeleteRequirement)
 	e.POST("/requirement", handler.CreateRequirement)
 
 	e.Logger.Fatal(e.Start(":8080"))
