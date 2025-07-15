@@ -99,4 +99,25 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get single requirement
+    patch:
+      description: Update a single requirement by id
+      parameters:
+      - description: id of the requirement
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Update requirement
 swagger: "2.0"

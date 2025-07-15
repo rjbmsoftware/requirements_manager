@@ -40,8 +40,9 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	e.GET("/requirement/:id", handler.GetRequirementById)
 	e.DELETE("/requirement/:id", handler.DeleteRequirement)
+	e.GET("/requirement/:id", handler.GetRequirementById)
+	e.PATCH("/requirement/:id", handler.UpdateRequirement)
 	e.POST("/requirement", handler.CreateRequirement)
 
 	e.Logger.Fatal(e.Start(":8080"))
