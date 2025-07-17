@@ -8,6 +8,18 @@ import (
 )
 
 var (
+	// ProductsColumns holds the columns for the "products" table.
+	ProductsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "description", Type: field.TypeString, Default: ""},
+		{Name: "title", Type: field.TypeString},
+	}
+	// ProductsTable holds the schema information for the "products" table.
+	ProductsTable = &schema.Table{
+		Name:       "products",
+		Columns:    ProductsColumns,
+		PrimaryKey: []*schema.Column{ProductsColumns[0]},
+	}
 	// RequirementsColumns holds the columns for the "requirements" table.
 	RequirementsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -23,6 +35,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ProductsTable,
 		RequirementsTable,
 	}
 )

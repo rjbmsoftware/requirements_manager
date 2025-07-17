@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	prodApi "requirements/apis/products"
 	reqApi "requirements/apis/requirements"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -30,6 +31,7 @@ func main() {
 	}
 	defer client.Close()
 	handler := &reqApi.Handler{DB: client}
+	productHandler := &prodApi.ProductHandler{DB: client}
 
 	// Create tables if they don't exist
 	if err := client.Schema.Create(context.Background()); err != nil {
@@ -44,6 +46,9 @@ func main() {
 	e.GET("/requirement/:id", handler.GetRequirementById)
 	e.PATCH("/requirement/:id", handler.UpdateRequirement)
 	e.POST("/requirement", handler.CreateRequirement)
+
+	e.GET("/product/:id", productHandler.GetProductById)
+	e.POST("/product", productHandler.CreateProduct)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

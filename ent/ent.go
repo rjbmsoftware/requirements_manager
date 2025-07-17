@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"requirements/ent/product"
 	"requirements/ent/requirement"
 	"sync"
 
@@ -73,6 +74,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			product.Table:     product.ValidColumn,
 			requirement.Table: requirement.ValidColumn,
 		})
 	})

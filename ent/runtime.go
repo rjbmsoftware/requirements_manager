@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"requirements/ent/product"
 	"requirements/ent/requirement"
 	"requirements/ent/schema"
 
@@ -13,6 +14,20 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	productFields := schema.Product{}.Fields()
+	_ = productFields
+	// productDescDescription is the schema descriptor for description field.
+	productDescDescription := productFields[0].Descriptor()
+	// product.DefaultDescription holds the default value on creation for the description field.
+	product.DefaultDescription = productDescDescription.Default.(string)
+	// productDescTitle is the schema descriptor for title field.
+	productDescTitle := productFields[2].Descriptor()
+	// product.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	product.TitleValidator = productDescTitle.Validators[0].(func(string) error)
+	// productDescID is the schema descriptor for id field.
+	productDescID := productFields[1].Descriptor()
+	// product.DefaultID holds the default value on creation for the id field.
+	product.DefaultID = productDescID.Default.(func() uuid.UUID)
 	requirementFields := schema.Requirement{}.Fields()
 	_ = requirementFields
 	// requirementDescTitle is the schema descriptor for title field.

@@ -9,6 +9,10 @@ A way of grouping of and tracking requirements between systems
     - [ ] products
     - [ ] implementations
 
+- [ ] tests
+- [ ] auth
+- [ ] front end
+
 
 ### Some day
 
@@ -26,3 +30,8 @@ A way of grouping of and tracking requirements between systems
 
 - swag fmt // formats the annotations
 - swag init // generates docs
+
+### Ent files
+
+- in ent/schema add a file for the entity to create
+- run go generate ./ent

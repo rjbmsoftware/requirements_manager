@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Product is the client for interacting with the Product builders.
+	Product *ProductClient
 	// Requirement is the client for interacting with the Requirement builders.
 	Requirement *RequirementClient
 
@@ -145,6 +147,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Product = NewProductClient(tx.config)
 	tx.Requirement = NewRequirementClient(tx.config)
 }
 
@@ -155,7 +158,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Requirement.QueryXXX(), the query will be executed
+// applies a query, for example: Product.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.
