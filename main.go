@@ -47,8 +47,10 @@ func main() {
 	e.PATCH("/requirement/:id", handler.UpdateRequirement)
 	e.POST("/requirement", handler.CreateRequirement)
 
+	e.DELETE("/product/:id", productHandler.DeleteProduct)
 	e.GET("/product/:id", productHandler.GetProductById)
 	e.POST("/product", productHandler.CreateProduct)
+	e.PATCH("/product/:id", productHandler.UpdateProduct)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
