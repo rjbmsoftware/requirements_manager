@@ -1,9 +1,0 @@
-Web framework is echo
-
-ORM is ent, 
-
-go get ent
-ent new Requirement which adds a requirement.go to a schema dir within ent
-go generate ./ent
-
-I had to go mod tidy to pull in the other dependencies 

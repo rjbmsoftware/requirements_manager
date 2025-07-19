@@ -22,7 +22,6 @@ type Handler struct {
 // @Success		200	{object}	ent.Requirement
 // @Failure		404
 // @Failure		400
-// @Failure		500
 func (h *Handler) GetRequirementById(c echo.Context) error {
 	id := c.Param("id")
 
@@ -38,7 +37,7 @@ func (h *Handler) GetRequirementById(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	return c.JSON(http.StatusCreated, requirement)
+	return c.JSON(http.StatusOK, requirement)
 }
 
 type CreateRequirementRequest struct {

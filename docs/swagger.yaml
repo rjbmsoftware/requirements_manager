@@ -96,8 +96,6 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
-        "500":
-          description: Internal Server Error
       summary: Get single requirement
     patch:
       description: Update a single requirement by id
