@@ -38,7 +38,7 @@ func (h *ProductHandler) GetProductById(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	return c.JSON(http.StatusCreated, product)
+	return c.JSON(http.StatusOK, product)
 }
 
 type CreateProductRequest struct {

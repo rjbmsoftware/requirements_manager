@@ -5,9 +5,24 @@ A way of grouping of and tracking requirements between systems
 ## TODO
 
 - [ ] APIs
-    - [x] requirements
+    - [ ] requirements
+        - [ ] get all paged
+        - [x] get
+        - [x] post
+        - [x] delete
+        - [x] patch
     - [ ] products
+        - [ ] get all paged
+        - [x] get
+        - [x] post
+        - [x] delete
+        - [x] patch
     - [ ] implementations
+        - [ ] get all paged
+        - [ ] get
+        - [ ] post
+        - [ ] delete
+        - [ ] patch
 
 - [ ] tests
 - [ ] make
