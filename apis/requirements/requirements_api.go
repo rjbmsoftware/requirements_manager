@@ -16,6 +16,7 @@ type Handler struct {
 
 // @Summary		Get single requirement
 // @Description	Get a single requirement by id
+// @Tags		Requirement
 // @Produce		json
 // @Router			/requirement/{id} [get]
 // @Param			id	path		string	true	"id of the requirement"	Format(uuid)
@@ -48,6 +49,7 @@ type CreateRequirementRequest struct {
 
 // @Summary		Create a single requirement
 // @Description	Create a single requirement
+// @Tags		Requirement
 // @Accept			json
 // @Param			request	body	CreateRequirementRequest	true	"Create requirement payload"
 // @Produce		json
@@ -79,12 +81,12 @@ func (h *Handler) CreateRequirement(c echo.Context) error {
 
 // @Summary		Delete single requirement
 // @Description	Delete a single requirement by id
+// @Tags		Requirement
 // @Produce		json
 // @Router			/requirement/{id} [delete]
 // @Param			id	path	string	true	"id of the requirement"	Format(uuid)
 // @Success		204
 // @Failure		400
-// @Failure		500
 func (h *Handler) DeleteRequirement(c echo.Context) error {
 	id := c.Param("id")
 
@@ -107,6 +109,7 @@ type UpdateRequirementRequest struct {
 
 // @Summary		Update requirement
 // @Description	Update a single requirement by id
+// @Tags		Requirement
 // @Produce		json
 // @Router			/requirement/{id} [patch]
 // @Param			id	path	string	true	"id of the requirement"	Format(uuid)

@@ -14,6 +14,15 @@ type ProductHandler struct {
 	DB *ent.Client
 }
 
+// @Summary		Get single product
+// @Description	Get a single product by id
+// @Tags		Product
+// @Produce		json
+// @Router			/product/{id} [get]
+// @Param			id	path		string	true	"id of the product"	Format(uuid)
+// @Success		200	{object}	ent.Product
+// @Failure		404
+// @Failure		400
 func (h *ProductHandler) GetProductById(c echo.Context) error {
 	id := c.Param("id")
 
@@ -37,6 +46,16 @@ type CreateProductRequest struct {
 	Description string `json:"description"`
 }
 
+// @Summary		Create a single product
+// @Description	Create a single product
+// @Tags		Product
+// @Accept			json
+// @Param			request	body	CreateProductRequest	true	"Create product payload"
+// @Produce		json
+// @Router			/product [post]
+// @Success		201	{object}	ent.Product
+// @Failure		400
+// @Failure		500
 func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	var req CreateProductRequest
 	if err := c.Bind(&req); err != nil {
@@ -58,6 +77,14 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	return c.JSON(http.StatusCreated, created)
 }
 
+// @Summary		Delete single product
+// @Description	Delete a single product by id
+// @Tags		Product
+// @Produce		json
+// @Router			/product/{id} [delete]
+// @Param			id	path	string	true	"id of the product"	Format(uuid)
+// @Success		204
+// @Failure		400
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 	id := c.Param("id")
 
@@ -76,6 +103,16 @@ type UpdateProductRequest struct {
 	Description *string `json:"description"`
 }
 
+// @Summary		Update product
+// @Description	Update a single product by id
+// @Tags		Product
+// @Produce		json
+// @Router			/product/{id} [patch]
+// @Param			id	path	string	true	"id of the product"	Format(uuid)
+// @Success		204
+// @Failure		400
+// @Failure		404
+// @Failure		500
 func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	id := c.Param("id")
 

@@ -19,6 +19,144 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/product": {
+            "post": {
+                "description": "Create a single product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Create a single product",
+                "parameters": [
+                    {
+                        "description": "Create product payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/products.CreateProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/product/{id}": {
+            "get": {
+                "description": "Get a single product by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Get single product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the product",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a single product by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Delete single product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the product",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            },
+            "patch": {
+                "description": "Update a single product by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Update product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the product",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/requirement": {
             "post": {
                 "description": "Create a single requirement",
@@ -27,6 +165,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "Requirement"
                 ],
                 "summary": "Create a single requirement",
                 "parameters": [
@@ -62,6 +203,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Requirement"
+                ],
                 "summary": "Get single requirement",
                 "parameters": [
                     {
@@ -93,6 +237,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Requirement"
+                ],
                 "summary": "Delete single requirement",
                 "parameters": [
                     {
@@ -110,9 +257,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -120,6 +264,9 @@ const docTemplate = `{
                 "description": "Update a single requirement by id",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "Requirement"
                 ],
                 "summary": "Update requirement",
                 "parameters": [
@@ -150,6 +297,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "ent.Product": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Description holds the value of the \"description\" field.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Title holds the value of the \"title\" field.",
+                    "type": "string"
+                }
+            }
+        },
         "ent.Requirement": {
             "type": "object",
             "properties": {
@@ -167,6 +331,17 @@ const docTemplate = `{
                 },
                 "title": {
                     "description": "Title holds the value of the \"title\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "products.CreateProductRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }

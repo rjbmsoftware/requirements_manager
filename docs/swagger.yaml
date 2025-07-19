@@ -1,4 +1,16 @@
 definitions:
+  ent.Product:
+    properties:
+      description:
+        description: Description holds the value of the "description" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      title:
+        description: Title holds the value of the "title" field.
+        type: string
+    type: object
   ent.Requirement:
     properties:
       description:
@@ -12,6 +24,13 @@ definitions:
         type: string
       title:
         description: Title holds the value of the "title" field.
+        type: string
+    type: object
+  products.CreateProductRequest:
+    properties:
+      description:
+        type: string
+      title:
         type: string
     type: object
   requirements.CreateRequirementRequest:
@@ -32,6 +51,98 @@ info:
   title: Requirements manager
   version: "1.0"
 paths:
+  /product:
+    post:
+      consumes:
+      - application/json
+      description: Create a single product
+      parameters:
+      - description: Create product payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/products.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Product'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Create a single product
+      tags:
+      - Product
+  /product/{id}:
+    delete:
+      description: Delete a single product by id
+      parameters:
+      - description: id of the product
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+      summary: Delete single product
+      tags:
+      - Product
+    get:
+      description: Get a single product by id
+      parameters:
+      - description: id of the product
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Product'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      summary: Get single product
+      tags:
+      - Product
+    patch:
+      description: Update a single product by id
+      parameters:
+      - description: id of the product
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Update product
+      tags:
+      - Product
   /requirement:
     post:
       consumes:
@@ -56,6 +167,8 @@ paths:
         "500":
           description: Internal Server Error
       summary: Create a single requirement
+      tags:
+      - Requirement
   /requirement/{id}:
     delete:
       description: Delete a single requirement by id
@@ -73,9 +186,9 @@ paths:
           description: No Content
         "400":
           description: Bad Request
-        "500":
-          description: Internal Server Error
       summary: Delete single requirement
+      tags:
+      - Requirement
     get:
       description: Get a single requirement by id
       parameters:
@@ -97,6 +210,8 @@ paths:
         "404":
           description: Not Found
       summary: Get single requirement
+      tags:
+      - Requirement
     patch:
       description: Update a single requirement by id
       parameters:
@@ -118,4 +233,6 @@ paths:
         "500":
           description: Internal Server Error
       summary: Update requirement
+      tags:
+      - Requirement
 swagger: "2.0"
