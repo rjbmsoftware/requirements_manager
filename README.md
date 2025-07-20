@@ -2,6 +2,9 @@
 
 A way of grouping of and tracking requirements between systems
 
+- run the project go run main.go
+- testing go test ./...
+
 ## TODO
 
 - [ ] APIs
