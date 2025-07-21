@@ -92,3 +92,52 @@ func TestGetProductSuccess(t *testing.T) {
 		require.JSONEq(t, productJSONString, rec.Body.String())
 	}
 }
+
+func TestCreateProductSuccess(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	requestBody := CreateProductRequest{
+		Title:       "product title TestCreateProductSuccess",
+		Description: "product description",
+	}
+
+	requestBytes, err := json.Marshal(requestBody)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(string(requestBytes)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+
+	h := &ProductHandler{dbClient}
+
+	if assert.NoError(t, h.CreateProduct(c)) {
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		responseProduct := ent.Product{}
+		err := json.Unmarshal(rec.Body.Bytes(), &responseProduct)
+		require.NoError(t, err)
+
+		savedProduct, err := h.DB.Product.Get(context.Background(), responseProduct.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, savedProduct.Title, requestBody.Title)
+	}
+}
+
+func TestCreateProductBadRequest(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	requestBody := `{"description": 1}`
+
+	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+
+	h := &ProductHandler{dbClient}
+
+	if assert.NoError(t, h.CreateProduct(c)) {
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	}
+}
