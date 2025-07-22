@@ -141,3 +141,19 @@ func TestCreateProductBadRequest(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }
+
+func TestDeleteProductBadRequest(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	req := httptest.NewRequest(http.MethodDelete, baseUrl, nil)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues("1234") // invalid UUID
+
+	h := &ProductHandler{dbClient}
+
+	if assert.NoError(t, h.DeleteProduct(c)) {
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	}
+}
