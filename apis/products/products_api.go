@@ -148,5 +148,6 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "could not update product"})
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }

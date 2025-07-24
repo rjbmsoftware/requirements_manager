@@ -157,3 +157,74 @@ func TestDeleteProductBadRequest(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }
+
+func TestDeleteProductSuccess(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	productId := uuid.New()
+
+	dbClient.Product.
+		Create().
+		SetID(productId).
+		SetDescription("a description").
+		SetTitle("a title").
+		Save(context.Background())
+
+	req := httptest.NewRequest(http.MethodDelete, baseUrl, nil)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(productId.String())
+
+	h := &ProductHandler{dbClient}
+
+	if assert.NoError(t, h.DeleteProduct(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		product, err := dbClient.Product.Get(context.Background(), productId)
+		require.Error(t, err)
+		assert.Nil(t, product)
+	}
+}
+
+func TestUpdateProductSuccess(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	productId := uuid.New()
+
+	dbClient.Product.
+		Create().
+		SetID(productId).
+		SetDescription("a description").
+		SetTitle("a title").
+		Save(context.Background())
+
+	updatedTitle := "new title"
+	updatedDescription := "new description"
+
+	requestProduct := UpdateProductRequest{
+		Title:       &updatedTitle,
+		Description: &updatedDescription,
+	}
+
+	requestBody, err := json.Marshal(requestProduct)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, baseUrl, strings.NewReader(string(requestBody)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(productId.String())
+
+	h := &ProductHandler{dbClient}
+
+	if assert.NoError(t, h.UpdateProduct(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		product, err := dbClient.Product.Get(context.Background(), productId)
+		require.NoError(t, err)
+		assert.Equal(t, updatedDescription, product.Description)
+		assert.Equal(t, product.Title, updatedTitle)
+	}
+}
