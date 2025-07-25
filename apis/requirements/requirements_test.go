@@ -1,7 +1,6 @@
 package requirements
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -36,7 +35,7 @@ func TestGetRequirementByIdSuccess(t *testing.T) {
 		SetID(requirementId).
 		SetPath("path/path/path").
 		SetTitle("title").
-		Save(context.Background())
+		Save(t.Context())
 
 	require.NoError(t, err)
 
@@ -56,5 +55,86 @@ func TestGetRequirementByIdSuccess(t *testing.T) {
 		assert.Equal(t, requirement.ID, responseRequirement.ID)
 		assert.Equal(t, requirement.Path, responseRequirement.Path)
 		assert.Equal(t, requirement.Title, responseRequirement.Title)
+	}
+}
+
+func TestGetRequirementByIdNotFound(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	req := httptest.NewRequest(http.MethodGet, baseUrl, strings.NewReader(""))
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	requirementId := uuid.New().String()
+	c.SetParamValues(requirementId)
+
+	h := &Handler{dbClient}
+
+	if assert.NoError(t, h.GetRequirementById(c)) {
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	}
+}
+
+func TestCreateRequirementSuccess(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	title := "some title"
+	description := "some description"
+	path := "some path"
+
+	thing := CreateRequirementRequest{
+		Title:       title,
+		Path:        path,
+		Description: description,
+	}
+
+	requestBody, err := json.Marshal(thing)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(string(requestBody)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+
+	h := &Handler{dbClient}
+
+	if assert.NoError(t, h.CreateRequirement(c)) {
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		responseRequirement := ent.Requirement{}
+		err := json.Unmarshal(rec.Body.Bytes(), &responseRequirement)
+		require.NoError(t, err)
+
+		storedRequirement, err := dbClient.Requirement.Get(t.Context(), responseRequirement.ID)
+		assert.Equal(t, title, storedRequirement.Title)
+		assert.Equal(t, description, storedRequirement.Description)
+		assert.Equal(t, path, storedRequirement.Path)
+	}
+}
+
+func TestDeleteRequirementSuccess(t *testing.T) {
+	dbClient, echoServer := setupTest(t)
+
+	requirementId := uuid.New()
+	dbClient.Requirement.Create().
+		SetID(requirementId).
+		SetDescription("some description").
+		SetPath("some path").
+		SetTitle("some title").
+		Save(t.Context())
+
+	req := httptest.NewRequest(http.MethodDelete, baseUrl, strings.NewReader(""))
+	rec := httptest.NewRecorder()
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(requirementId.String())
+
+	h := &Handler{dbClient}
+
+	if assert.NoError(t, h.DeleteRequirement(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		_, err := dbClient.Requirement.Get(t.Context(), requirementId)
+		require.Error(t, err)
 	}
 }
