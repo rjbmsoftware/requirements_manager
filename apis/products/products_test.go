@@ -29,7 +29,7 @@ func setupTest(t *testing.T) (*ent.Client, *echo.Echo) {
 func TestGetProductNotFound(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, strings.NewReader(""))
+	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -46,7 +46,7 @@ func TestGetProductNotFound(t *testing.T) {
 func TestGetProductInvalidIdBadRequest(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, strings.NewReader(""))
+	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -66,7 +66,7 @@ func TestGetProductInvalidIdBadRequest(t *testing.T) {
 func TestGetProductSuccess(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, strings.NewReader(""))
+	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
