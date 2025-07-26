@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"requirements/ent/implementation"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -58,6 +59,21 @@ func (rc *RequirementCreate) SetNillableID(u *uuid.UUID) *RequirementCreate {
 		rc.SetID(*u)
 	}
 	return rc
+}
+
+// AddImplementationIDs adds the "implementations" edge to the Implementation entity by IDs.
+func (rc *RequirementCreate) AddImplementationIDs(ids ...uuid.UUID) *RequirementCreate {
+	rc.mutation.AddImplementationIDs(ids...)
+	return rc
+}
+
+// AddImplementations adds the "implementations" edges to the Implementation entity.
+func (rc *RequirementCreate) AddImplementations(i ...*Implementation) *RequirementCreate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return rc.AddImplementationIDs(ids...)
 }
 
 // Mutation returns the RequirementMutation object of the builder.
@@ -172,6 +188,22 @@ func (rc *RequirementCreate) createSpec() (*Requirement, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.Description(); ok {
 		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if nodes := rc.mutation.ImplementationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

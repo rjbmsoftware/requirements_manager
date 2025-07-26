@@ -8,6 +8,18 @@ import (
 	"requirements/ent"
 )
 
+// The ImplementationFunc type is an adapter to allow the use of ordinary
+// function as Implementation mutator.
+type ImplementationFunc func(context.Context, *ent.ImplementationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ImplementationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ImplementationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ImplementationMutation", m)
+}
+
 // The ProductFunc type is an adapter to allow the use of ordinary
 // function as Product mutator.
 type ProductFunc func(context.Context, *ent.ProductMutation) (ent.Value, error)

@@ -11,12 +11,14 @@ import (
 
 	"requirements/ent/migrate"
 
+	"requirements/ent/implementation"
 	"requirements/ent/product"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -25,6 +27,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Implementation is the client for interacting with the Implementation builders.
+	Implementation *ImplementationClient
 	// Product is the client for interacting with the Product builders.
 	Product *ProductClient
 	// Requirement is the client for interacting with the Requirement builders.
@@ -40,6 +44,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Implementation = NewImplementationClient(c.config)
 	c.Product = NewProductClient(c.config)
 	c.Requirement = NewRequirementClient(c.config)
 }
@@ -132,10 +137,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Product:     NewProductClient(cfg),
-		Requirement: NewRequirementClient(cfg),
+		ctx:            ctx,
+		config:         cfg,
+		Implementation: NewImplementationClient(cfg),
+		Product:        NewProductClient(cfg),
+		Requirement:    NewRequirementClient(cfg),
 	}, nil
 }
 
@@ -153,17 +159,18 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Product:     NewProductClient(cfg),
-		Requirement: NewRequirementClient(cfg),
+		ctx:            ctx,
+		config:         cfg,
+		Implementation: NewImplementationClient(cfg),
+		Product:        NewProductClient(cfg),
+		Requirement:    NewRequirementClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Product.
+//		Implementation.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -185,6 +192,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Implementation.Use(hooks...)
 	c.Product.Use(hooks...)
 	c.Requirement.Use(hooks...)
 }
@@ -192,6 +200,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Implementation.Intercept(interceptors...)
 	c.Product.Intercept(interceptors...)
 	c.Requirement.Intercept(interceptors...)
 }
@@ -199,12 +208,163 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ImplementationMutation:
+		return c.Implementation.mutate(ctx, m)
 	case *ProductMutation:
 		return c.Product.mutate(ctx, m)
 	case *RequirementMutation:
 		return c.Requirement.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// ImplementationClient is a client for the Implementation schema.
+type ImplementationClient struct {
+	config
+}
+
+// NewImplementationClient returns a client for the Implementation from the given config.
+func NewImplementationClient(c config) *ImplementationClient {
+	return &ImplementationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `implementation.Hooks(f(g(h())))`.
+func (c *ImplementationClient) Use(hooks ...Hook) {
+	c.hooks.Implementation = append(c.hooks.Implementation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `implementation.Intercept(f(g(h())))`.
+func (c *ImplementationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Implementation = append(c.inters.Implementation, interceptors...)
+}
+
+// Create returns a builder for creating a Implementation entity.
+func (c *ImplementationClient) Create() *ImplementationCreate {
+	mutation := newImplementationMutation(c.config, OpCreate)
+	return &ImplementationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Implementation entities.
+func (c *ImplementationClient) CreateBulk(builders ...*ImplementationCreate) *ImplementationCreateBulk {
+	return &ImplementationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ImplementationClient) MapCreateBulk(slice any, setFunc func(*ImplementationCreate, int)) *ImplementationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ImplementationCreateBulk{err: fmt.Errorf("calling to ImplementationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ImplementationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ImplementationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Implementation.
+func (c *ImplementationClient) Update() *ImplementationUpdate {
+	mutation := newImplementationMutation(c.config, OpUpdate)
+	return &ImplementationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ImplementationClient) UpdateOne(i *Implementation) *ImplementationUpdateOne {
+	mutation := newImplementationMutation(c.config, OpUpdateOne, withImplementation(i))
+	return &ImplementationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ImplementationClient) UpdateOneID(id uuid.UUID) *ImplementationUpdateOne {
+	mutation := newImplementationMutation(c.config, OpUpdateOne, withImplementationID(id))
+	return &ImplementationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Implementation.
+func (c *ImplementationClient) Delete() *ImplementationDelete {
+	mutation := newImplementationMutation(c.config, OpDelete)
+	return &ImplementationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ImplementationClient) DeleteOne(i *Implementation) *ImplementationDeleteOne {
+	return c.DeleteOneID(i.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ImplementationClient) DeleteOneID(id uuid.UUID) *ImplementationDeleteOne {
+	builder := c.Delete().Where(implementation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ImplementationDeleteOne{builder}
+}
+
+// Query returns a query builder for Implementation.
+func (c *ImplementationClient) Query() *ImplementationQuery {
+	return &ImplementationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeImplementation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Implementation entity by its id.
+func (c *ImplementationClient) Get(ctx context.Context, id uuid.UUID) (*Implementation, error) {
+	return c.Query().Where(implementation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ImplementationClient) GetX(ctx context.Context, id uuid.UUID) *Implementation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRequirements queries the requirements edge of a Implementation.
+func (c *ImplementationClient) QueryRequirements(i *Implementation) *RequirementQuery {
+	query := (&RequirementClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(implementation.Table, implementation.FieldID, id),
+			sqlgraph.To(requirement.Table, requirement.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, implementation.RequirementsTable, implementation.RequirementsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ImplementationClient) Hooks() []Hook {
+	return c.hooks.Implementation
+}
+
+// Interceptors returns the client interceptors.
+func (c *ImplementationClient) Interceptors() []Interceptor {
+	return c.inters.Implementation
+}
+
+func (c *ImplementationClient) mutate(ctx context.Context, m *ImplementationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ImplementationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ImplementationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ImplementationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ImplementationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Implementation mutation op: %q", m.Op())
 	}
 }
 
@@ -449,6 +609,22 @@ func (c *RequirementClient) GetX(ctx context.Context, id uuid.UUID) *Requirement
 	return obj
 }
 
+// QueryImplementations queries the implementations edge of a Requirement.
+func (c *RequirementClient) QueryImplementations(r *Requirement) *ImplementationQuery {
+	query := (&ImplementationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(requirement.Table, requirement.FieldID, id),
+			sqlgraph.To(implementation.Table, implementation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, requirement.ImplementationsTable, requirement.ImplementationsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *RequirementClient) Hooks() []Hook {
 	return c.hooks.Requirement
@@ -477,9 +653,9 @@ func (c *RequirementClient) mutate(ctx context.Context, m *RequirementMutation) 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Product, Requirement []ent.Hook
+		Implementation, Product, Requirement []ent.Hook
 	}
 	inters struct {
-		Product, Requirement []ent.Interceptor
+		Implementation, Product, Requirement []ent.Interceptor
 	}
 )

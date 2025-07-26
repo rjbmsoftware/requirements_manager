@@ -4,6 +4,7 @@ package requirement
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -18,8 +19,15 @@ const (
 	FieldPath = "path"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// EdgeImplementations holds the string denoting the implementations edge name in mutations.
+	EdgeImplementations = "implementations"
 	// Table holds the table name of the requirement in the database.
 	Table = "requirements"
+	// ImplementationsTable is the table that holds the implementations relation/edge. The primary key declared below.
+	ImplementationsTable = "requirement_implementations"
+	// ImplementationsInverseTable is the table name for the Implementation entity.
+	// It exists in this package in order to avoid circular dependency with the "implementation" package.
+	ImplementationsInverseTable = "implementations"
 )
 
 // Columns holds all SQL columns for requirement fields.
@@ -29,6 +37,12 @@ var Columns = []string{
 	FieldPath,
 	FieldDescription,
 }
+
+var (
+	// ImplementationsPrimaryKey and ImplementationsColumn2 are the table columns denoting the
+	// primary key for the implementations relation (M2M).
+	ImplementationsPrimaryKey = []string{"requirement_id", "implementation_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -72,4 +86,25 @@ func ByPath(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByImplementationsCount orders the results by implementations count.
+func ByImplementationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newImplementationsStep(), opts...)
+	}
+}
+
+// ByImplementations orders the results by implementations terms.
+func ByImplementations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newImplementationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newImplementationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ImplementationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, ImplementationsTable, ImplementationsPrimaryKey...),
+	)
 }

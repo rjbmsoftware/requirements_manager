@@ -21,6 +21,7 @@ import (
 const baseUrl = "/requirement"
 
 func setupTest(t *testing.T) (*ent.Client, *echo.Echo) {
+	t.Parallel()
 	dbClient := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
 	t.Cleanup(func() { dbClient.Close() })
 	return dbClient, echo.New()

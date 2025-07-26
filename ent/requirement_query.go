@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
+	"requirements/ent/implementation"
 	"requirements/ent/predicate"
 	"requirements/ent/requirement"
 
@@ -19,10 +21,11 @@ import (
 // RequirementQuery is the builder for querying Requirement entities.
 type RequirementQuery struct {
 	config
-	ctx        *QueryContext
-	order      []requirement.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Requirement
+	ctx                 *QueryContext
+	order               []requirement.OrderOption
+	inters              []Interceptor
+	predicates          []predicate.Requirement
+	withImplementations *ImplementationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +60,28 @@ func (rq *RequirementQuery) Unique(unique bool) *RequirementQuery {
 func (rq *RequirementQuery) Order(o ...requirement.OrderOption) *RequirementQuery {
 	rq.order = append(rq.order, o...)
 	return rq
+}
+
+// QueryImplementations chains the current query on the "implementations" edge.
+func (rq *RequirementQuery) QueryImplementations() *ImplementationQuery {
+	query := (&ImplementationClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(requirement.Table, requirement.FieldID, selector),
+			sqlgraph.To(implementation.Table, implementation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, requirement.ImplementationsTable, requirement.ImplementationsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Requirement entity from the query.
@@ -246,15 +271,27 @@ func (rq *RequirementQuery) Clone() *RequirementQuery {
 		return nil
 	}
 	return &RequirementQuery{
-		config:     rq.config,
-		ctx:        rq.ctx.Clone(),
-		order:      append([]requirement.OrderOption{}, rq.order...),
-		inters:     append([]Interceptor{}, rq.inters...),
-		predicates: append([]predicate.Requirement{}, rq.predicates...),
+		config:              rq.config,
+		ctx:                 rq.ctx.Clone(),
+		order:               append([]requirement.OrderOption{}, rq.order...),
+		inters:              append([]Interceptor{}, rq.inters...),
+		predicates:          append([]predicate.Requirement{}, rq.predicates...),
+		withImplementations: rq.withImplementations.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
 	}
+}
+
+// WithImplementations tells the query-builder to eager-load the nodes that are connected to
+// the "implementations" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RequirementQuery) WithImplementations(opts ...func(*ImplementationQuery)) *RequirementQuery {
+	query := (&ImplementationClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withImplementations = query
+	return rq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,8 +370,11 @@ func (rq *RequirementQuery) prepareQuery(ctx context.Context) error {
 
 func (rq *RequirementQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Requirement, error) {
 	var (
-		nodes = []*Requirement{}
-		_spec = rq.querySpec()
+		nodes       = []*Requirement{}
+		_spec       = rq.querySpec()
+		loadedTypes = [1]bool{
+			rq.withImplementations != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Requirement).scanValues(nil, columns)
@@ -342,6 +382,7 @@ func (rq *RequirementQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Requirement{config: rq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -353,7 +394,76 @@ func (rq *RequirementQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := rq.withImplementations; query != nil {
+		if err := rq.loadImplementations(ctx, query, nodes,
+			func(n *Requirement) { n.Edges.Implementations = []*Implementation{} },
+			func(n *Requirement, e *Implementation) { n.Edges.Implementations = append(n.Edges.Implementations, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (rq *RequirementQuery) loadImplementations(ctx context.Context, query *ImplementationQuery, nodes []*Requirement, init func(*Requirement), assign func(*Requirement, *Implementation)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*Requirement)
+	nids := make(map[uuid.UUID]map[*Requirement]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(requirement.ImplementationsTable)
+		s.Join(joinT).On(s.C(implementation.FieldID), joinT.C(requirement.ImplementationsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(requirement.ImplementationsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(requirement.ImplementationsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Requirement]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Implementation](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "implementations" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (rq *RequirementQuery) sqlCount(ctx context.Context) (int, error) {

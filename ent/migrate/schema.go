@@ -8,6 +8,18 @@ import (
 )
 
 var (
+	// ImplementationsColumns holds the columns for the "implementations" table.
+	ImplementationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "url", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Default: ""},
+	}
+	// ImplementationsTable holds the schema information for the "implementations" table.
+	ImplementationsTable = &schema.Table{
+		Name:       "implementations",
+		Columns:    ImplementationsColumns,
+		PrimaryKey: []*schema.Column{ImplementationsColumns[0]},
+	}
 	// ProductsColumns holds the columns for the "products" table.
 	ProductsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -33,12 +45,41 @@ var (
 		Columns:    RequirementsColumns,
 		PrimaryKey: []*schema.Column{RequirementsColumns[0]},
 	}
+	// RequirementImplementationsColumns holds the columns for the "requirement_implementations" table.
+	RequirementImplementationsColumns = []*schema.Column{
+		{Name: "requirement_id", Type: field.TypeUUID},
+		{Name: "implementation_id", Type: field.TypeUUID},
+	}
+	// RequirementImplementationsTable holds the schema information for the "requirement_implementations" table.
+	RequirementImplementationsTable = &schema.Table{
+		Name:       "requirement_implementations",
+		Columns:    RequirementImplementationsColumns,
+		PrimaryKey: []*schema.Column{RequirementImplementationsColumns[0], RequirementImplementationsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "requirement_implementations_requirement_id",
+				Columns:    []*schema.Column{RequirementImplementationsColumns[0]},
+				RefColumns: []*schema.Column{RequirementsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "requirement_implementations_implementation_id",
+				Columns:    []*schema.Column{RequirementImplementationsColumns[1]},
+				RefColumns: []*schema.Column{ImplementationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ImplementationsTable,
 		ProductsTable,
 		RequirementsTable,
+		RequirementImplementationsTable,
 	}
 )
 
 func init() {
+	RequirementImplementationsTable.ForeignKeys[0].RefTable = RequirementsTable
+	RequirementImplementationsTable.ForeignKeys[1].RefTable = ImplementationsTable
 }

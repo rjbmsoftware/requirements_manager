@@ -22,8 +22,29 @@ type Requirement struct {
 	// Path holds the value of the "path" field.
 	Path string `json:"path,omitempty"`
 	// Description holds the value of the "description" field.
-	Description  string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the RequirementQuery when eager-loading is set.
+	Edges        RequirementEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// RequirementEdges holds the relations/edges for other nodes in the graph.
+type RequirementEdges struct {
+	// Implementations holds the value of the implementations edge.
+	Implementations []*Implementation `json:"implementations,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ImplementationsOrErr returns the Implementations value or an error if the edge
+// was not loaded in eager-loading.
+func (e RequirementEdges) ImplementationsOrErr() ([]*Implementation, error) {
+	if e.loadedTypes[0] {
+		return e.Implementations, nil
+	}
+	return nil, &NotLoadedError{edge: "implementations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -85,6 +106,11 @@ func (r *Requirement) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (r *Requirement) Value(name string) (ent.Value, error) {
 	return r.selectValues.Get(name)
+}
+
+// QueryImplementations queries the "implementations" edge of the Requirement entity.
+func (r *Requirement) QueryImplementations() *ImplementationQuery {
+	return NewRequirementClient(r.config).QueryImplementations(r)
 }
 
 // Update returns a builder for updating this Requirement.

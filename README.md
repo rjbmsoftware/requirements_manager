@@ -54,3 +54,5 @@ A way of grouping of and tracking requirements between systems
 
 - in ent/schema add a file for the entity to create
 - run go generate ./ent
+
+initially ent generate ./ent/schema before I had any files

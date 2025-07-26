@@ -6,12 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"requirements/ent/implementation"
 	"requirements/ent/predicate"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // RequirementUpdate is the builder for updating Requirement entities.
@@ -69,9 +71,45 @@ func (ru *RequirementUpdate) SetNillableDescription(s *string) *RequirementUpdat
 	return ru
 }
 
+// AddImplementationIDs adds the "implementations" edge to the Implementation entity by IDs.
+func (ru *RequirementUpdate) AddImplementationIDs(ids ...uuid.UUID) *RequirementUpdate {
+	ru.mutation.AddImplementationIDs(ids...)
+	return ru
+}
+
+// AddImplementations adds the "implementations" edges to the Implementation entity.
+func (ru *RequirementUpdate) AddImplementations(i ...*Implementation) *RequirementUpdate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ru.AddImplementationIDs(ids...)
+}
+
 // Mutation returns the RequirementMutation object of the builder.
 func (ru *RequirementUpdate) Mutation() *RequirementMutation {
 	return ru.mutation
+}
+
+// ClearImplementations clears all "implementations" edges to the Implementation entity.
+func (ru *RequirementUpdate) ClearImplementations() *RequirementUpdate {
+	ru.mutation.ClearImplementations()
+	return ru
+}
+
+// RemoveImplementationIDs removes the "implementations" edge to Implementation entities by IDs.
+func (ru *RequirementUpdate) RemoveImplementationIDs(ids ...uuid.UUID) *RequirementUpdate {
+	ru.mutation.RemoveImplementationIDs(ids...)
+	return ru
+}
+
+// RemoveImplementations removes "implementations" edges to Implementation entities.
+func (ru *RequirementUpdate) RemoveImplementations(i ...*Implementation) *RequirementUpdate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ru.RemoveImplementationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -137,6 +175,51 @@ func (ru *RequirementUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.Description(); ok {
 		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
 	}
+	if ru.mutation.ImplementationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedImplementationsIDs(); len(nodes) > 0 && !ru.mutation.ImplementationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ImplementationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{requirement.Label}
@@ -199,9 +282,45 @@ func (ruo *RequirementUpdateOne) SetNillableDescription(s *string) *RequirementU
 	return ruo
 }
 
+// AddImplementationIDs adds the "implementations" edge to the Implementation entity by IDs.
+func (ruo *RequirementUpdateOne) AddImplementationIDs(ids ...uuid.UUID) *RequirementUpdateOne {
+	ruo.mutation.AddImplementationIDs(ids...)
+	return ruo
+}
+
+// AddImplementations adds the "implementations" edges to the Implementation entity.
+func (ruo *RequirementUpdateOne) AddImplementations(i ...*Implementation) *RequirementUpdateOne {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ruo.AddImplementationIDs(ids...)
+}
+
 // Mutation returns the RequirementMutation object of the builder.
 func (ruo *RequirementUpdateOne) Mutation() *RequirementMutation {
 	return ruo.mutation
+}
+
+// ClearImplementations clears all "implementations" edges to the Implementation entity.
+func (ruo *RequirementUpdateOne) ClearImplementations() *RequirementUpdateOne {
+	ruo.mutation.ClearImplementations()
+	return ruo
+}
+
+// RemoveImplementationIDs removes the "implementations" edge to Implementation entities by IDs.
+func (ruo *RequirementUpdateOne) RemoveImplementationIDs(ids ...uuid.UUID) *RequirementUpdateOne {
+	ruo.mutation.RemoveImplementationIDs(ids...)
+	return ruo
+}
+
+// RemoveImplementations removes "implementations" edges to Implementation entities.
+func (ruo *RequirementUpdateOne) RemoveImplementations(i ...*Implementation) *RequirementUpdateOne {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ruo.RemoveImplementationIDs(ids...)
 }
 
 // Where appends a list predicates to the RequirementUpdate builder.
@@ -296,6 +415,51 @@ func (ruo *RequirementUpdateOne) sqlSave(ctx context.Context) (_node *Requiremen
 	}
 	if value, ok := ruo.mutation.Description(); ok {
 		_spec.SetField(requirement.FieldDescription, field.TypeString, value)
+	}
+	if ruo.mutation.ImplementationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedImplementationsIDs(); len(nodes) > 0 && !ruo.mutation.ImplementationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ImplementationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   requirement.ImplementationsTable,
+			Columns: requirement.ImplementationsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(implementation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Requirement{config: ruo.config}
 	_spec.Assign = _node.assignValues
