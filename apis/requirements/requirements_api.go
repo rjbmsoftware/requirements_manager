@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"requirements/apis/utils"
 	"requirements/ent"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -36,15 +36,12 @@ func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 // @Failure		404
 // @Failure		400
 func (h *Handler) GetRequirementById(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Requirement GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
-	requirement, err := h.DB.Requirement.Get(context.Background(), parsedId)
+	requirement, err := h.DB.Requirement.Get(context.Background(), id)
 	if err != nil {
 		log.Println("Could not find requirement")
 		return c.NoContent(http.StatusNotFound)
@@ -100,15 +97,12 @@ func (h *Handler) CreateRequirement(c echo.Context) error {
 // @Success		204
 // @Failure		400
 func (h *Handler) DeleteRequirement(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Requirement GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
-	h.DB.Requirement.DeleteOneID(parsedId).Exec(context.Background())
+	h.DB.Requirement.DeleteOneID(id).Exec(context.Background())
 
 	return c.NoContent(http.StatusNoContent)
 }
@@ -130,12 +124,9 @@ type UpdateRequirementRequest struct {
 // @Failure		404
 // @Failure		500
 func (h *Handler) UpdateRequirement(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Requirement GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
 	var req UpdateRequirementRequest
@@ -144,7 +135,7 @@ func (h *Handler) UpdateRequirement(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
 	}
 
-	requirement, err := h.DB.Requirement.Get(context.Background(), parsedId)
+	requirement, err := h.DB.Requirement.Get(context.Background(), id)
 	if err != nil {
 		log.Println("Could not find requirement")
 		return c.NoContent(http.StatusNotFound)

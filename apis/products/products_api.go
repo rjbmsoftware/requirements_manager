@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"requirements/apis/utils"
 	"requirements/ent"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -36,15 +36,12 @@ func ProductSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 // @Failure		404
 // @Failure		400
 func (h *ProductHandler) GetProductById(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Product GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
-	product, err := h.DB.Product.Get(context.Background(), parsedId)
+	product, err := h.DB.Product.Get(context.Background(), id)
 	if err != nil {
 		log.Println("Could not find product")
 		return c.NoContent(http.StatusNotFound)
@@ -98,15 +95,12 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 // @Success		204
 // @Failure		400
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Product GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
-	h.DB.Product.DeleteOneID(parsedId).Exec(context.Background())
+	h.DB.Product.DeleteOneID(id).Exec(context.Background())
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -126,12 +120,9 @@ type UpdateProductRequest struct {
 // @Failure		404
 // @Failure		500
 func (h *ProductHandler) UpdateProduct(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Product GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
 	var req UpdateProductRequest
@@ -140,7 +131,7 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
 	}
 
-	product, err := h.DB.Product.Get(context.Background(), parsedId)
+	product, err := h.DB.Product.Get(context.Background(), id)
 	if err != nil {
 		log.Println("Could not find product")
 		return c.NoContent(http.StatusNotFound)

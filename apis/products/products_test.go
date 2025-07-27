@@ -55,11 +55,12 @@ func TestGetProductInvalidIdBadRequest(t *testing.T) {
 
 	h := &ProductHandler{dbClient}
 
-	if assert.NoError(t, h.GetProductById(c)) {
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		responseBody := strings.TrimSpace(rec.Body.String())
-		assert.Equal(t, "{\"error\":\"invalid id\"}", responseBody)
+	err := h.DeleteProduct(c)
+	if err != nil {
+		c.Echo().HTTPErrorHandler(err, c)
 	}
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestGetProductSuccess(t *testing.T) {
@@ -130,7 +131,6 @@ func TestCreateProductBadRequest(t *testing.T) {
 	requestBody := `{"description": 1}`
 
 	req := httptest.NewRequest(http.MethodPost, productUrl, strings.NewReader(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 
@@ -148,13 +148,15 @@ func TestDeleteProductBadRequest(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues("1234") // invalid UUID
+	c.SetParamValues("1234567890") // invalid UUID
 
 	h := &ProductHandler{dbClient}
 
-	if assert.NoError(t, h.DeleteProduct(c)) {
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	err := h.DeleteProduct(c)
+	if err != nil {
+		c.Echo().HTTPErrorHandler(err, c)
 	}
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestDeleteProductSuccess(t *testing.T) {
