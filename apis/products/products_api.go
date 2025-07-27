@@ -14,6 +14,18 @@ type ProductHandler struct {
 	DB *ent.Client
 }
 
+const productUrl = "/product"
+const productIdUrl = productUrl + "/:id"
+
+func ProductSetup(apiGroup *echo.Group, dbClient *ent.Client) {
+	productHandler := &ProductHandler{dbClient}
+
+	apiGroup.DELETE(productIdUrl, productHandler.DeleteProduct)
+	apiGroup.GET(productIdUrl, productHandler.GetProductById)
+	apiGroup.POST(productUrl, productHandler.CreateProduct)
+	apiGroup.PATCH(productIdUrl, productHandler.UpdateProduct)
+}
+
 // @Summary		Get single product
 // @Description	Get a single product by id
 // @Tags		Product

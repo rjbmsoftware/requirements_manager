@@ -18,8 +18,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const baseUrl = "/product"
-
 func setupTest(t *testing.T) (*ent.Client, *echo.Echo) {
 	t.Parallel()
 	dbClient := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
@@ -30,7 +28,7 @@ func setupTest(t *testing.T) (*ent.Client, *echo.Echo) {
 func TestGetProductNotFound(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, productUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -47,7 +45,7 @@ func TestGetProductNotFound(t *testing.T) {
 func TestGetProductInvalidIdBadRequest(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, productIdUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -67,7 +65,7 @@ func TestGetProductInvalidIdBadRequest(t *testing.T) {
 func TestGetProductSuccess(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, productIdUrl, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -105,7 +103,7 @@ func TestCreateProductSuccess(t *testing.T) {
 	requestBytes, err := json.Marshal(requestBody)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(string(requestBytes)))
+	req := httptest.NewRequest(http.MethodPost, productUrl, strings.NewReader(string(requestBytes)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -131,7 +129,7 @@ func TestCreateProductBadRequest(t *testing.T) {
 
 	requestBody := `{"description": 1}`
 
-	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(requestBody))
+	req := httptest.NewRequest(http.MethodPost, productUrl, strings.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -146,7 +144,7 @@ func TestCreateProductBadRequest(t *testing.T) {
 func TestDeleteProductBadRequest(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodDelete, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodDelete, productIdUrl, nil)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -171,7 +169,7 @@ func TestDeleteProductSuccess(t *testing.T) {
 		SetTitle("a title").
 		Save(context.Background())
 
-	req := httptest.NewRequest(http.MethodDelete, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodDelete, productIdUrl, nil)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -211,7 +209,7 @@ func TestUpdateProductSuccess(t *testing.T) {
 	requestBody, err := json.Marshal(requestProduct)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPatch, baseUrl, strings.NewReader(string(requestBody)))
+	req := httptest.NewRequest(http.MethodPatch, productIdUrl, strings.NewReader(string(requestBody)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)

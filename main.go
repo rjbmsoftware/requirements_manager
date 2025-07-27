@@ -32,7 +32,6 @@ func main() {
 	}
 	defer client.Close()
 	handler := &reqApi.Handler{DB: client}
-	productHandler := &prodApi.ProductHandler{DB: client}
 
 	// Create tables if they don't exist
 	if err := client.Schema.Create(context.Background()); err != nil {
@@ -49,10 +48,8 @@ func main() {
 	e.PATCH("/requirement/:id", handler.UpdateRequirement)
 	e.POST("/requirement", handler.CreateRequirement)
 
-	e.DELETE("/product/:id", productHandler.DeleteProduct)
-	e.GET("/product/:id", productHandler.GetProductById)
-	e.POST("/product", productHandler.CreateProduct)
-	e.PATCH("/product/:id", productHandler.UpdateProduct)
+	api_group := e.Group("/api")
+	prodApi.ProductSetup(api_group, client)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
