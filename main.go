@@ -31,7 +31,6 @@ func main() {
 		log.Fatalf("failed opening connection to sqlite: %v", err)
 	}
 	defer client.Close()
-	handler := &reqApi.Handler{DB: client}
 
 	// Create tables if they don't exist
 	if err := client.Schema.Create(context.Background()); err != nil {
@@ -43,13 +42,9 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	e.DELETE("/requirement/:id", handler.DeleteRequirement)
-	e.GET("/requirement/:id", handler.GetRequirementById)
-	e.PATCH("/requirement/:id", handler.UpdateRequirement)
-	e.POST("/requirement", handler.CreateRequirement)
-
 	api_group := e.Group("/api")
 	prodApi.ProductSetup(api_group, client)
+	reqApi.RequirementSetup(api_group, client)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

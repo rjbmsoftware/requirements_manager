@@ -18,8 +18,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const baseUrl = "/requirement"
-
 func setupTest(t *testing.T) (*ent.Client, *echo.Echo) {
 	t.Parallel()
 	dbClient := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
@@ -41,7 +39,7 @@ func TestGetRequirementByIdSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, requirementIdUrl, nil)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -63,7 +61,7 @@ func TestGetRequirementByIdSuccess(t *testing.T) {
 func TestGetRequirementByIdNotFound(t *testing.T) {
 	dbClient, echoServer := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, requirementIdUrl, nil)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -93,7 +91,7 @@ func TestCreateRequirementSuccess(t *testing.T) {
 	requestBody, err := json.Marshal(thing)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, baseUrl, strings.NewReader(string(requestBody)))
+	req := httptest.NewRequest(http.MethodPost, requirementUrl, strings.NewReader(string(requestBody)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
@@ -125,7 +123,7 @@ func TestDeleteRequirementSuccess(t *testing.T) {
 		SetTitle("some title").
 		Save(context.Background())
 
-	req := httptest.NewRequest(http.MethodDelete, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodDelete, requirementIdUrl, nil)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -165,7 +163,7 @@ func TestUpdateRequirementSuccess(t *testing.T) {
 	requestBody, err := json.Marshal(&requestBodyRequirement)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPatch, baseUrl, strings.NewReader(string(requestBody)))
+	req := httptest.NewRequest(http.MethodPatch, requirementIdUrl, strings.NewReader(string(requestBody)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echoServer.NewContext(req, rec)

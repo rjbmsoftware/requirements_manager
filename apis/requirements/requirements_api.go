@@ -14,6 +14,18 @@ type Handler struct {
 	DB *ent.Client
 }
 
+const requirementUrl = "/product"
+const requirementIdUrl = requirementUrl + "/:id"
+
+func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
+	handler := &Handler{dbClient}
+
+	apiGroup.DELETE("/requirement/:id", handler.DeleteRequirement)
+	apiGroup.GET("/requirement/:id", handler.GetRequirementById)
+	apiGroup.PATCH("/requirement/:id", handler.UpdateRequirement)
+	apiGroup.POST("/requirement", handler.CreateRequirement)
+}
+
 // @Summary		Get single requirement
 // @Description	Get a single requirement by id
 // @Tags		Requirement
