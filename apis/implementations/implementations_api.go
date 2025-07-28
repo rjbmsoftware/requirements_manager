@@ -2,7 +2,6 @@ package implementations
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"requirements/ent"
@@ -15,6 +14,8 @@ type ImplementationsHandler struct {
 	DB *ent.Client
 }
 
+const baseUrl = "/implementation"
+
 func (h *ImplementationsHandler) GetImplementationById(c echo.Context) error {
 	id := c.Param("id")
 
@@ -24,12 +25,35 @@ func (h *ImplementationsHandler) GetImplementationById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 
-	_, err = h.DB.Implementation.Get(context.Background(), parsedId)
+	imp, err := h.DB.Implementation.Get(context.Background(), parsedId)
 	if err != nil {
 		log.Println("Could not find implementation")
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	fmt.Println(parsedId)
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, imp)
+}
+
+type CreateImplementationRequest struct {
+	Url         string `json:"url"`
+	Description string `json:"description"`
+}
+
+func (h *ImplementationsHandler) CreateImplementation(c echo.Context) error {
+	var req CreateImplementationRequest
+	err := c.Bind(&req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
+	}
+
+	imp, err := h.DB.Implementation.Create().
+		SetURL(req.Url).
+		SetDescription(req.Description).
+		Save(context.Background())
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save"})
+	}
+
+	return c.JSON(http.StatusCreated, imp)
 }
