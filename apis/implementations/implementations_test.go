@@ -67,7 +67,7 @@ func TestGetImplementationSuccess(t *testing.T) {
 }
 
 func TestCreateImplementationSuccess(t *testing.T) {
-	_, echoServer, rec, h := setupTest(t)
+	dbClient, echoServer, rec, h := setupTest(t)
 
 	desc := "some description"
 	url := "http://someserver.invalid"
@@ -86,5 +86,14 @@ func TestCreateImplementationSuccess(t *testing.T) {
 
 	if assert.NoError(t, h.CreateImplementation(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		imp := &ent.Implementation{}
+		err = json.Unmarshal(rec.Body.Bytes(), imp)
+		require.NoError(t, err)
+		storedImp, err := dbClient.Implementation.Get(context.Background(), imp.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, desc, storedImp.Description)
+		assert.Equal(t, url, storedImp.URL)
 	}
 }
