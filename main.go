@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	impApi "requirements/apis/implementations"
 	prodApi "requirements/apis/products"
 	reqApi "requirements/apis/requirements"
 
@@ -45,6 +46,7 @@ func main() {
 	api_group := e.Group("/api")
 	prodApi.ProductSetup(api_group, client)
 	reqApi.RequirementSetup(api_group, client)
+	impApi.ImplementationSetup(api_group, client)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

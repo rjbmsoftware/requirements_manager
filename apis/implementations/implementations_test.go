@@ -28,7 +28,7 @@ func setupTest(t *testing.T) (*ent.Client, *echo.Echo, *httptest.ResponseRecorde
 func TestImplementationGetByIdNotFound(t *testing.T) {
 	_, echoServer, rec, h := setupTest(t)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, implementationUrl, nil)
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
 	c.SetParamValues(uuid.New().String())
@@ -48,7 +48,7 @@ func TestGetImplementationSuccess(t *testing.T) {
 		Save(context.Background())
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, baseUrl, nil)
+	req := httptest.NewRequest(http.MethodGet, implementationUrl, nil)
 	c := echoServer.NewContext(req, rec)
 	c.SetParamNames("id")
 	c.SetParamValues(imp.ID.String())
@@ -80,7 +80,7 @@ func TestCreateImplementationSuccess(t *testing.T) {
 	requestBody, err := json.Marshal(requestImp)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, baseUrl, bytes.NewReader(requestBody))
+	req := httptest.NewRequest(http.MethodPost, implementationUrl, bytes.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := echoServer.NewContext(req, rec)
 
@@ -95,5 +95,30 @@ func TestCreateImplementationSuccess(t *testing.T) {
 
 		assert.Equal(t, desc, storedImp.Description)
 		assert.Equal(t, url, storedImp.URL)
+	}
+}
+
+func TestDeleteImplementationSuccess(t *testing.T) {
+	dbClient, echoServer, rec, h := setupTest(t)
+
+	impId := uuid.New()
+
+	_, err := dbClient.Implementation.Create().
+		SetDescription("a description").
+		SetURL("https://someurl.invalid").
+		SetID(impId).
+		Save(context.Background())
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, implementationUrl, nil)
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(impId.String())
+
+	if assert.NoError(t, h.DeleteImplementation(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		_, err = dbClient.Product.Get(context.Background(), impId)
+		require.Error(t, err)
 	}
 }
