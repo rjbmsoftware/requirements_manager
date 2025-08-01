@@ -122,3 +122,38 @@ func TestDeleteImplementationSuccess(t *testing.T) {
 		require.Error(t, err)
 	}
 }
+
+func TestUpdateImplementationSuccess(t *testing.T) {
+	dbClient, echoServer, rec, h := setupTest(t)
+
+	impStored, err := dbClient.Implementation.Create().
+		SetDescription("original description").
+		SetURL("https://originalurl.invalid").
+		Save(context.Background())
+	require.NoError(t, err)
+
+	desc, url := "some description", "https://someurl.invalid"
+	imp := &UpdateImplementationRequest{
+		Description: &desc,
+		Url:         &url,
+	}
+
+	reqImp, err := json.Marshal(imp)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, implementationIdUrl, bytes.NewReader(reqImp))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c := echoServer.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(impStored.ID.String())
+
+	if assert.NoError(t, h.UpdateImplementation(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		impUpdated, err := dbClient.Implementation.Get(context.Background(), impStored.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, desc, impUpdated.Description)
+		assert.Equal(t, url, impUpdated.URL)
+	}
+}

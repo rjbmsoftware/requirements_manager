@@ -7,7 +7,6 @@ import (
 	"requirements/apis/utils"
 	"requirements/ent"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -27,15 +26,12 @@ func ImplementationSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 }
 
 func (h *ImplementationsHandler) GetImplementationById(c echo.Context) error {
-	id := c.Param("id")
-
-	parsedId, err := uuid.Parse(id)
+	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
-		log.Printf("Requirement GET invalid id: %s", id)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return err
 	}
 
-	imp, err := h.DB.Implementation.Get(context.Background(), parsedId)
+	imp, err := h.DB.Implementation.Get(context.Background(), id)
 	if err != nil {
 		log.Println("Could not find implementation")
 		return c.NoContent(http.StatusNotFound)
@@ -75,5 +71,45 @@ func (h *ImplementationsHandler) DeleteImplementation(c echo.Context) error {
 	}
 
 	h.DB.Implementation.DeleteOneID(id).Exec(context.Background())
+	return c.NoContent(http.StatusNoContent)
+}
+
+type UpdateImplementationRequest struct {
+	Url         *string `json:"url"`
+	Description *string `json:"description"`
+}
+
+func (h *ImplementationsHandler) UpdateImplementation(c echo.Context) error {
+	id, err := utils.PathParamUuidValidation(c, "id")
+	if err != nil {
+		return err
+	}
+
+	imp, err := h.DB.Implementation.Get(context.Background(), id)
+	if err != nil {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	updateImpReq := UpdateImplementationRequest{}
+	if err = c.Bind(&updateImpReq); err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
+	}
+
+	impUpdater := imp.Update()
+
+	if updateImpReq.Description != nil {
+		impUpdater.SetDescription(*updateImpReq.Description)
+	}
+
+	if updateImpReq.Url != nil {
+		impUpdater.SetURL(*updateImpReq.Url)
+	}
+
+	_, err = impUpdater.Save(context.Background())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save"})
+	}
+
 	return c.NoContent(http.StatusNoContent)
 }
