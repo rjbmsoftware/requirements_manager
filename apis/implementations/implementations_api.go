@@ -23,6 +23,7 @@ func ImplementationSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 	apiGroup.DELETE(implementationIdUrl, impHandler.DeleteImplementation)
 	apiGroup.GET(implementationIdUrl, impHandler.GetImplementationById)
 	apiGroup.POST(implementationUrl, impHandler.CreateImplementation)
+	apiGroup.PATCH(implementationIdUrl, impHandler.UpdateImplementation)
 }
 
 func (h *ImplementationsHandler) GetImplementationById(c echo.Context) error {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"html/template"
 	"log"
 
 	"requirements/ent"
@@ -14,6 +15,8 @@ import (
 	impApi "requirements/apis/implementations"
 	prodApi "requirements/apis/products"
 	reqApi "requirements/apis/requirements"
+
+	reqFe "requirements/frontEnd/requirements"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
 
@@ -47,6 +50,12 @@ func main() {
 	prodApi.ProductSetup(api_group, client)
 	reqApi.RequirementSetup(api_group, client)
 	impApi.ImplementationSetup(api_group, client)
+
+	t := &reqFe.RequirementsListTemplate{
+		Templates: template.Must(template.ParseGlob("frontEnd/requirements/views/*.html")),
+	}
+	e.Renderer = t
+	e.GET("/requirements", reqFe.Hello)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -10,27 +10,27 @@ A way of grouping of and tracking requirements between systems
 - [ ] APIs
     - [ ] requirements
         - [ ] get all paged
-        - [x] get
-        - [x] post
-        - [x] delete
-        - [x] patch
     - [ ] products
         - [ ] get all paged
-        - [x] get
-        - [x] post
-        - [x] delete
-        - [x] patch
     - [ ] implementations
         - [ ] get all paged
-        - [ ] get
-        - [ ] post
-        - [ ] delete
-        - [ ] patch
+        - [ ] put
+        - [ ] docs
+
+- [ ] refactor to standard go project
+
+- [ ] front end
+    - [ ] requirements
+        - [ ] list
+        - [ ] create
+        - [ ] update
+    - [ ] products list
+    - [ ] implementation list
 
 - [ ] tests
 - [ ] make
 - [ ] auth
-- [ ] front end
+
 
 
 ### Some day
