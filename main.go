@@ -53,9 +53,10 @@ func main() {
 
 	t := &reqFe.RequirementsListTemplate{
 		Templates: template.Must(template.ParseGlob("frontEnd/requirements/views/*.html")),
+		DB:        client,
 	}
 	e.Renderer = t
-	e.GET("/requirements", reqFe.Hello)
+	e.GET("/requirements", t.RequirementList)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

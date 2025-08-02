@@ -2,4 +2,7 @@
 <title>Requirements Manager</title>
 <body>
     <h1>Requirements</h1>
+    {{ range . }}
+        <div>{{ .Path }}</div>
+    {{ end}}
 </body>
