@@ -11,6 +11,156 @@
         "version": "1.0"
     },
     "paths": {
+        "/implementation": {
+            "post": {
+                "description": "Create a single implementation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Implementation"
+                ],
+                "summary": "Create a single implementation",
+                "parameters": [
+                    {
+                        "description": "Create implementation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/implementations.CreateImplementationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Implementation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/implementation/{id}": {
+            "get": {
+                "description": "Get a single implementation by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Implementation"
+                ],
+                "summary": "Get single implementation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the implementation",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Implementation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a single implementation by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Implementation"
+                ],
+                "summary": "Delete single implementation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the implementation",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            },
+            "patch": {
+                "description": "Update a single implementation by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Implementation"
+                ],
+                "summary": "Update implementation",
+                "parameters": [
+                    {
+                        "description": "Update implementation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/implementations.UpdateImplementationRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "id of the implementation",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/product": {
             "post": {
                 "description": "Create a single product",
@@ -116,6 +266,9 @@
             },
             "patch": {
                 "description": "Update a single product by id",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -124,6 +277,15 @@
                 ],
                 "summary": "Update product",
                 "parameters": [
+                    {
+                        "description": "Update product payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/products.UpdateProductRequest"
+                        }
+                    },
                     {
                         "type": "string",
                         "format": "uuid",
@@ -254,6 +416,9 @@
             },
             "patch": {
                 "description": "Update a single requirement by id",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -262,6 +427,15 @@
                 ],
                 "summary": "Update requirement",
                 "parameters": [
+                    {
+                        "description": "Update requirement payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requirements.UpdateRequirementRequest"
+                        }
+                    },
                     {
                         "type": "string",
                         "format": "uuid",
@@ -289,6 +463,43 @@
         }
     },
     "definitions": {
+        "ent.Implementation": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Description holds the value of the \"description\" field.",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ImplementationQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.ImplementationEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "URL holds the value of the \"url\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.ImplementationEdges": {
+            "type": "object",
+            "properties": {
+                "requirements": {
+                    "description": "Requirements holds the value of the requirements edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Requirement"
+                    }
+                }
+            }
+        },
         "ent.Product": {
             "type": "object",
             "properties": {
@@ -313,6 +524,14 @@
                     "description": "Description holds the value of the \"description\" field.",
                     "type": "string"
                 },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the RequirementQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.RequirementEdges"
+                        }
+                    ]
+                },
                 "id": {
                     "description": "ID of the ent.",
                     "type": "string"
@@ -323,6 +542,40 @@
                 },
                 "title": {
                     "description": "Title holds the value of the \"title\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.RequirementEdges": {
+            "type": "object",
+            "properties": {
+                "implementations": {
+                    "description": "Implementations holds the value of the implementations edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Implementation"
+                    }
+                }
+            }
+        },
+        "implementations.CreateImplementationRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "implementations.UpdateImplementationRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -338,7 +591,32 @@
                 }
             }
         },
+        "products.UpdateProductRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "requirements.CreateRequirementRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "requirements.UpdateRequirementRequest": {
             "type": "object",
             "properties": {
                 "description": {

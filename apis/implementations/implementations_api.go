@@ -26,6 +26,15 @@ func ImplementationSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 	apiGroup.PATCH(implementationIdUrl, impHandler.UpdateImplementation)
 }
 
+// @Summary		Get single implementation
+// @Description	Get a single implementation by id
+// @Tags		Implementation
+// @Produce		json
+// @Router			/implementation/{id} [get]
+// @Param			id	path		string	true	"id of the implementation"	Format(uuid)
+// @Success		200	{object}	ent.Implementation
+// @Failure		404
+// @Failure		400
 func (h *ImplementationsHandler) GetImplementationById(c echo.Context) error {
 	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
@@ -46,6 +55,16 @@ type CreateImplementationRequest struct {
 	Description string `json:"description"`
 }
 
+// @Summary		Create a single implementation
+// @Description	Create a single implementation
+// @Tags		Implementation
+// @Accept			json
+// @Param			request	body	CreateImplementationRequest	true	"Create implementation payload"
+// @Produce		json
+// @Router			/implementation [post]
+// @Success		201	{object}	ent.Implementation
+// @Failure		400
+// @Failure		500
 func (h *ImplementationsHandler) CreateImplementation(c echo.Context) error {
 	var req CreateImplementationRequest
 	err := c.Bind(&req)
@@ -65,6 +84,14 @@ func (h *ImplementationsHandler) CreateImplementation(c echo.Context) error {
 	return c.JSON(http.StatusCreated, imp)
 }
 
+// @Summary		Delete single implementation
+// @Description	Delete a single implementation by id
+// @Tags		Implementation
+// @Produce		json
+// @Router			/implementation/{id} [delete]
+// @Param			id	path	string	true	"id of the implementation"	Format(uuid)
+// @Success		204
+// @Failure		400
 func (h *ImplementationsHandler) DeleteImplementation(c echo.Context) error {
 	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {
@@ -80,6 +107,18 @@ type UpdateImplementationRequest struct {
 	Description *string `json:"description"`
 }
 
+// @Summary		Update implementation
+// @Description	Update a single implementation by id
+// @Tags		Implementation
+// @Accept			json
+// @Param			request	body	UpdateImplementationRequest	true	"Update implementation payload"
+// @Produce		json
+// @Router			/implementation/{id} [patch]
+// @Param			id	path	string	true	"id of the implementation"	Format(uuid)
+// @Success		204
+// @Failure		400
+// @Failure		404
+// @Failure		500
 func (h *ImplementationsHandler) UpdateImplementation(c echo.Context) error {
 	id, err := utils.PathParamUuidValidation(c, "id")
 	if err != nil {

@@ -112,6 +112,8 @@ type UpdateProductRequest struct {
 // @Summary		Update product
 // @Description	Update a single product by id
 // @Tags		Product
+// @Accept			json
+// @Param			request	body	UpdateProductRequest	true	"Update product payload"
 // @Produce		json
 // @Router			/product/{id} [patch]
 // @Param			id	path	string	true	"id of the product"	Format(uuid)

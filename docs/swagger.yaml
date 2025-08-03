@@ -1,4 +1,30 @@
 definitions:
+  ent.Implementation:
+    properties:
+      description:
+        description: Description holds the value of the "description" field.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ImplementationEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ImplementationQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      url:
+        description: URL holds the value of the "url" field.
+        type: string
+    type: object
+  ent.ImplementationEdges:
+    properties:
+      requirements:
+        description: Requirements holds the value of the requirements edge.
+        items:
+          $ref: '#/definitions/ent.Requirement'
+        type: array
+    type: object
   ent.Product:
     properties:
       description:
@@ -16,6 +42,12 @@ definitions:
       description:
         description: Description holds the value of the "description" field.
         type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.RequirementEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the RequirementQuery when eager-loading is set.
       id:
         description: ID of the ent.
         type: string
@@ -26,6 +58,28 @@ definitions:
         description: Title holds the value of the "title" field.
         type: string
     type: object
+  ent.RequirementEdges:
+    properties:
+      implementations:
+        description: Implementations holds the value of the implementations edge.
+        items:
+          $ref: '#/definitions/ent.Implementation'
+        type: array
+    type: object
+  implementations.CreateImplementationRequest:
+    properties:
+      description:
+        type: string
+      url:
+        type: string
+    type: object
+  implementations.UpdateImplementationRequest:
+    properties:
+      description:
+        type: string
+      url:
+        type: string
+    type: object
   products.CreateProductRequest:
     properties:
       description:
@@ -33,7 +87,23 @@ definitions:
       title:
         type: string
     type: object
+  products.UpdateProductRequest:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
   requirements.CreateRequirementRequest:
+    properties:
+      description:
+        type: string
+      path:
+        type: string
+      title:
+        type: string
+    type: object
+  requirements.UpdateRequirementRequest:
     properties:
       description:
         type: string
@@ -51,6 +121,106 @@ info:
   title: Requirements manager
   version: "1.0"
 paths:
+  /implementation:
+    post:
+      consumes:
+      - application/json
+      description: Create a single implementation
+      parameters:
+      - description: Create implementation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/implementations.CreateImplementationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Implementation'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Create a single implementation
+      tags:
+      - Implementation
+  /implementation/{id}:
+    delete:
+      description: Delete a single implementation by id
+      parameters:
+      - description: id of the implementation
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+      summary: Delete single implementation
+      tags:
+      - Implementation
+    get:
+      description: Get a single implementation by id
+      parameters:
+      - description: id of the implementation
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Implementation'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      summary: Get single implementation
+      tags:
+      - Implementation
+    patch:
+      consumes:
+      - application/json
+      description: Update a single implementation by id
+      parameters:
+      - description: Update implementation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/implementations.UpdateImplementationRequest'
+      - description: id of the implementation
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Update implementation
+      tags:
+      - Implementation
   /product:
     post:
       consumes:
@@ -121,8 +291,16 @@ paths:
       tags:
       - Product
     patch:
+      consumes:
+      - application/json
       description: Update a single product by id
       parameters:
+      - description: Update product payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/products.UpdateProductRequest'
       - description: id of the product
         format: uuid
         in: path
@@ -213,8 +391,16 @@ paths:
       tags:
       - Requirement
     patch:
+      consumes:
+      - application/json
       description: Update a single requirement by id
       parameters:
+      - description: Update requirement payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requirements.UpdateRequirementRequest'
       - description: id of the requirement
         format: uuid
         in: path

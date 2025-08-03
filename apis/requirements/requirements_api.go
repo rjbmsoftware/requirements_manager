@@ -58,9 +58,9 @@ type CreateRequirementRequest struct {
 
 // @Summary		Create a single requirement
 // @Description	Create a single requirement
-// @Tags		Requirement
 // @Accept			json
 // @Param			request	body	CreateRequirementRequest	true	"Create requirement payload"
+// @Tags		Requirement
 // @Produce		json
 // @Router			/requirement [post]
 // @Success		201	{object}	ent.Requirement
@@ -117,6 +117,8 @@ type UpdateRequirementRequest struct {
 // @Description	Update a single requirement by id
 // @Tags		Requirement
 // @Produce		json
+// @Accept			json
+// @Param			request	body	UpdateRequirementRequest	true	"Update requirement payload"
 // @Router			/requirement/{id} [patch]
 // @Param			id	path	string	true	"id of the requirement"	Format(uuid)
 // @Success		204
