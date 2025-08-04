@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"requirements/apis/utils"
 	"requirements/ent"
+	"requirements/ent/requirement"
 
 	"github.com/labstack/echo/v4"
 )
@@ -14,16 +15,40 @@ type Handler struct {
 	DB *ent.Client
 }
 
-const requirementUrl = "/product"
+const requirementUrl = "/requirement"
 const requirementIdUrl = requirementUrl + "/:id"
 
 func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 	handler := &Handler{dbClient}
 
-	apiGroup.DELETE("/requirement/:id", handler.DeleteRequirement)
-	apiGroup.GET("/requirement/:id", handler.GetRequirementById)
-	apiGroup.PATCH("/requirement/:id", handler.UpdateRequirement)
-	apiGroup.POST("/requirement", handler.CreateRequirement)
+	apiGroup.DELETE(requirementIdUrl, handler.DeleteRequirement)
+	apiGroup.GET(requirementIdUrl, handler.GetRequirementById)
+	apiGroup.GET(requirementUrl, handler.GetAllRequirementsPaged)
+	apiGroup.PATCH(requirementIdUrl, handler.UpdateRequirement)
+	apiGroup.POST(requirementUrl, handler.CreateRequirement)
+}
+
+type GetAllRequirementsResponse struct {
+	NextToken *string            `json:"nextToken"`
+	Data      []*ent.Requirement `json:"data"`
+}
+
+func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
+	pageSize := 1
+	reqs, err := h.DB.Requirement.Query().
+		Limit(pageSize).
+		Order(ent.Asc(requirement.FieldPath)).
+		All(context.Background())
+	if err != nil {
+		message := map[string]string{"error": "failed to read requirements"}
+		return c.JSON(http.StatusInternalServerError, message)
+	}
+
+	allReqs := GetAllRequirementsResponse{
+		NextToken: nil,
+		Data:      reqs,
+	}
+	return c.JSON(http.StatusOK, allReqs)
 }
 
 // @Summary		Get single requirement
