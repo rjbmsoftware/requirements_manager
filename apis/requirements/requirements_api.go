@@ -34,9 +34,12 @@ type GetAllRequirementsResponse struct {
 }
 
 func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
+	token := c.QueryParam("nextToken")
+
 	pageSize := 1
 	reqs, err := h.DB.Requirement.Query().
 		Limit(pageSize).
+		Where(requirement.PathGT(token)).
 		Order(ent.Asc(requirement.FieldPath)).
 		All(context.Background())
 	if err != nil {
