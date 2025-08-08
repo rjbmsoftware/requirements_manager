@@ -2,6 +2,7 @@ package requirements
 
 import (
 	"context"
+	"encoding/base64"
 	"log"
 	"net/http"
 	"requirements/apis/utils"
@@ -34,12 +35,18 @@ type GetAllRequirementsResponse struct {
 }
 
 func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
-	token := c.QueryParam("nextToken")
+	reqNextToken := c.QueryParam("nextToken")
+	output, err := base64.URLEncoding.DecodeString(reqNextToken)
+	if err != nil {
+		message := map[string]string{"error": "invalid nextToken"}
+		return c.JSON(http.StatusBadRequest, message)
+	}
+	reqNextToken = string(output)
 
-	pageSize := 1
+	pageSize := 5
 	reqs, err := h.DB.Requirement.Query().
-		Limit(pageSize).
-		Where(requirement.PathGT(token)).
+		Limit(pageSize + 1).
+		Where(requirement.PathGTE(reqNextToken)).
 		Order(ent.Asc(requirement.FieldPath)).
 		All(context.Background())
 	if err != nil {
@@ -47,9 +54,16 @@ func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, message)
 	}
 
+	var nextToken string
+	if len(reqs) > pageSize {
+		lastPath := []byte(reqs[len(reqs)-1].Path)
+		nextToken = base64.URLEncoding.EncodeToString(lastPath)
+	}
+
+	maxRequirements := min(pageSize, len(reqs))
 	allReqs := GetAllRequirementsResponse{
-		NextToken: nil,
-		Data:      reqs,
+		NextToken: &nextToken,
+		Data:      reqs[:maxRequirements],
 	}
 	return c.JSON(http.StatusOK, allReqs)
 }
