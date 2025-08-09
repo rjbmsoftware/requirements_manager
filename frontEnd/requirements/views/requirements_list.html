@@ -2,6 +2,11 @@
 <title>Requirements Manager</title>
 <body>
     <h1>Requirements</h1>
+    <form action="" method="GET">
+        <label for="searchBox">Search</label>
+        <input name="search" type="text" id="searchBox">
+        <input type="submit">
+    </form>
     {{ range . }}
         <div>{{ .Path }}</div>
     {{ end}}

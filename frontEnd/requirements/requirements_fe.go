@@ -21,7 +21,10 @@ func (t *RequirementsListTemplate) Render(w io.Writer, name string, data interfa
 }
 
 func (t *RequirementsListTemplate) RequirementList(c echo.Context) error {
+	searchTerm := c.QueryParam("search")
+
 	Reqs, _ := t.DB.Requirement.Query().
+		Where(requirement.PathHasPrefix(searchTerm)).
 		Order(ent.Asc(requirement.FieldPath)).
 		All(context.Background())
 	return c.Render(http.StatusOK, "requirements_list.html", Reqs)
