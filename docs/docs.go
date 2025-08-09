@@ -320,6 +320,39 @@ const docTemplate = `{
             }
         },
         "/requirement": {
+            "get": {
+                "description": "Get requirements paged response",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Requirement"
+                ],
+                "summary": "Get requirements",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "token for next page",
+                        "name": "nextToken",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/requirements.GetAllRequirementsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
             "post": {
                 "description": "Create a single requirement",
                 "consumes": [
@@ -620,6 +653,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "requirements.GetAllRequirementsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Requirement"
+                    }
+                },
+                "nextToken": {
                     "type": "string"
                 }
             }

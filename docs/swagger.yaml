@@ -103,6 +103,15 @@ definitions:
       title:
         type: string
     type: object
+  requirements.GetAllRequirementsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/ent.Requirement'
+        type: array
+      nextToken:
+        type: string
+    type: object
   requirements.UpdateRequirementRequest:
     properties:
       description:
@@ -322,6 +331,28 @@ paths:
       tags:
       - Product
   /requirement:
+    get:
+      description: Get requirements paged response
+      parameters:
+      - description: token for next page
+        format: string
+        in: query
+        name: nextToken
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requirements.GetAllRequirementsResponse'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Get requirements
+      tags:
+      - Requirement
     post:
       consumes:
       - application/json

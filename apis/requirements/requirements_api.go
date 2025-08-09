@@ -24,7 +24,7 @@ func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 
 	apiGroup.DELETE(requirementIdUrl, handler.DeleteRequirement)
 	apiGroup.GET(requirementIdUrl, handler.GetRequirementById)
-	apiGroup.GET(requirementUrl, handler.GetAllRequirementsPaged)
+	apiGroup.GET(requirementUrl, handler.GetAllRequirements)
 	apiGroup.PATCH(requirementIdUrl, handler.UpdateRequirement)
 	apiGroup.POST(requirementUrl, handler.CreateRequirement)
 }
@@ -34,7 +34,16 @@ type GetAllRequirementsResponse struct {
 	Data      []*ent.Requirement `json:"data"`
 }
 
-func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
+// @Summary		Get requirements
+// @Description	Get requirements paged response
+// @Tags		Requirement
+// @Produce		json
+// @Param       nextToken    query     string  false  "token for next page"  Format(string)
+// @Router			/requirement [get]
+// @Success		200	{object}	GetAllRequirementsResponse
+// @Failure		400
+// @Failure		500
+func (h *Handler) GetAllRequirements(c echo.Context) error {
 	reqNextToken := c.QueryParam("nextToken")
 	output, err := base64.URLEncoding.DecodeString(reqNextToken)
 	if err != nil {
@@ -43,7 +52,7 @@ func (h *Handler) GetAllRequirementsPaged(c echo.Context) error {
 	}
 	reqNextToken = string(output)
 
-	pageSize := 5
+	pageSize := 10
 	reqs, err := h.DB.Requirement.Query().
 		Limit(pageSize + 1).
 		Where(requirement.PathGTE(reqNextToken)).
