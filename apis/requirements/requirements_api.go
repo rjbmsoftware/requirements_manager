@@ -30,7 +30,7 @@ func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 }
 
 type GetAllRequirementsResponse struct {
-	NextToken *string            `json:"nextToken"`
+	NextToken string             `json:"nextToken"`
 	Data      []*ent.Requirement `json:"data"`
 }
 
@@ -63,7 +63,7 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, message)
 	}
 
-	var nextToken string
+	nextToken := ""
 	if len(reqs) > pageSize {
 		lastPath := []byte(reqs[len(reqs)-1].Path)
 		nextToken = base64.URLEncoding.EncodeToString(lastPath)
@@ -71,7 +71,7 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 
 	maxRequirements := min(pageSize, len(reqs))
 	allReqs := GetAllRequirementsResponse{
-		NextToken: &nextToken,
+		NextToken: nextToken,
 		Data:      reqs[:maxRequirements],
 	}
 	return c.JSON(http.StatusOK, allReqs)

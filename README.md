@@ -8,8 +8,6 @@ A way of grouping of and tracking requirements between systems
 ## TODO
 
 - [ ] APIs
-    - [ ] requirements
-        - [ ] get all paged
     - [ ] products
         - [ ] get all paged
     - [ ] implementations
