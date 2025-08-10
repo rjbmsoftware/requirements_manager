@@ -53,27 +53,26 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 	reqNextToken = string(output)
 
 	pageSize := 10
+
 	reqs, err := h.DB.Requirement.Query().
 		Limit(pageSize + 1).
 		Where(requirement.PathGTE(reqNextToken)).
 		Order(ent.Asc(requirement.FieldPath)).
 		All(context.Background())
+
 	if err != nil {
 		message := map[string]string{"error": "failed to read requirements"}
 		return c.JSON(http.StatusInternalServerError, message)
 	}
 
-	nextToken := ""
-	if len(reqs) > pageSize {
-		lastPath := []byte(reqs[len(reqs)-1].Path)
-		nextToken = base64.URLEncoding.EncodeToString(lastPath)
-	}
+	nextToken := GenerateNextToken(reqs, pageSize)
 
 	maxRequirements := min(pageSize, len(reqs))
 	allReqs := GetAllRequirementsResponse{
 		NextToken: nextToken,
 		Data:      reqs[:maxRequirements],
 	}
+
 	return c.JSON(http.StatusOK, allReqs)
 }
 
