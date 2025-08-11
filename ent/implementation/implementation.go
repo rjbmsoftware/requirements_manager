@@ -19,6 +19,8 @@ const (
 	FieldDescription = "description"
 	// EdgeRequirements holds the string denoting the requirements edge name in mutations.
 	EdgeRequirements = "requirements"
+	// EdgeProducts holds the string denoting the products edge name in mutations.
+	EdgeProducts = "products"
 	// Table holds the table name of the implementation in the database.
 	Table = "implementations"
 	// RequirementsTable is the table that holds the requirements relation/edge. The primary key declared below.
@@ -26,6 +28,13 @@ const (
 	// RequirementsInverseTable is the table name for the Requirement entity.
 	// It exists in this package in order to avoid circular dependency with the "requirement" package.
 	RequirementsInverseTable = "requirements"
+	// ProductsTable is the table that holds the products relation/edge.
+	ProductsTable = "implementations"
+	// ProductsInverseTable is the table name for the Product entity.
+	// It exists in this package in order to avoid circular dependency with the "product" package.
+	ProductsInverseTable = "products"
+	// ProductsColumn is the table column denoting the products relation/edge.
+	ProductsColumn = "product_implementations_product"
 )
 
 // Columns holds all SQL columns for implementation fields.
@@ -33,6 +42,12 @@ var Columns = []string{
 	FieldID,
 	FieldURL,
 	FieldDescription,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "implementations"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"product_implementations_product",
 }
 
 var (
@@ -45,6 +60,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -91,10 +111,24 @@ func ByRequirements(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newRequirementsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByProductsField orders the results by products field.
+func ByProductsField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProductsStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newRequirementsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(RequirementsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, RequirementsTable, RequirementsPrimaryKey...),
+	)
+}
+func newProductsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProductsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ProductsTable, ProductsColumn),
 	)
 }

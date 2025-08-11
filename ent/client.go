@@ -343,6 +343,22 @@ func (c *ImplementationClient) QueryRequirements(i *Implementation) *Requirement
 	return query
 }
 
+// QueryProducts queries the products edge of a Implementation.
+func (c *ImplementationClient) QueryProducts(i *Implementation) *ProductQuery {
+	query := (&ProductClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(implementation.Table, implementation.FieldID, id),
+			sqlgraph.To(product.Table, product.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, implementation.ProductsTable, implementation.ProductsColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ImplementationClient) Hooks() []Hook {
 	return c.hooks.Implementation
@@ -474,6 +490,22 @@ func (c *ProductClient) GetX(ctx context.Context, id uuid.UUID) *Product {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryImplementationsProduct queries the implementationsProduct edge of a Product.
+func (c *ProductClient) QueryImplementationsProduct(pr *Product) *ImplementationQuery {
+	query := (&ImplementationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(product.Table, product.FieldID, id),
+			sqlgraph.To(implementation.Table, implementation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, product.ImplementationsProductTable, product.ImplementationsProductColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

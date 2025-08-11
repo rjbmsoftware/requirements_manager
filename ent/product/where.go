@@ -6,6 +6,7 @@ import (
 	"requirements/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -192,6 +193,29 @@ func TitleEqualFold(v string) predicate.Product {
 // TitleContainsFold applies the ContainsFold predicate on the "title" field.
 func TitleContainsFold(v string) predicate.Product {
 	return predicate.Product(sql.FieldContainsFold(FieldTitle, v))
+}
+
+// HasImplementationsProduct applies the HasEdge predicate on the "implementationsProduct" edge.
+func HasImplementationsProduct() predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ImplementationsProductTable, ImplementationsProductColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasImplementationsProductWith applies the HasEdge predicate on the "implementationsProduct" edge with a given conditions (other predicates).
+func HasImplementationsProductWith(preds ...predicate.Implementation) predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := newImplementationsProductStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

@@ -47,7 +47,7 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 	reqNextToken := c.QueryParam("nextToken")
 	output, err := base64.URLEncoding.DecodeString(reqNextToken)
 	if err != nil {
-		message := map[string]string{"error": "invalid nextToken"}
+		message := utils.ErrorMessageMap("invalid nextToken")
 		return c.JSON(http.StatusBadRequest, message)
 	}
 	reqNextToken = string(output)
@@ -61,11 +61,17 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 		All(context.Background())
 
 	if err != nil {
-		message := map[string]string{"error": "failed to read requirements"}
+		message := utils.ErrorMessageMap("failed to read requirements")
 		return c.JSON(http.StatusInternalServerError, message)
 	}
 
-	nextToken := GenerateNextToken(reqs, pageSize)
+	titles := make([]string, len(reqs))
+	for i, v := range reqs {
+		titles[i] = v.Title
+	}
+
+	nextToken := GenerateNextToken(titles, pageSize)
+	// nextToken := GenerateNextToken(reqs, pageSize)
 
 	maxRequirements := min(pageSize, len(reqs))
 	allReqs := GetAllRequirementsResponse{

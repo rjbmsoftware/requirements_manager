@@ -20,8 +20,29 @@ type Product struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Title holds the value of the "title" field.
-	Title        string `json:"title,omitempty"`
+	Title string `json:"title,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ProductQuery when eager-loading is set.
+	Edges        ProductEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ProductEdges holds the relations/edges for other nodes in the graph.
+type ProductEdges struct {
+	// ImplementationsProduct holds the value of the implementationsProduct edge.
+	ImplementationsProduct []*Implementation `json:"implementationsProduct,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ImplementationsProductOrErr returns the ImplementationsProduct value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProductEdges) ImplementationsProductOrErr() ([]*Implementation, error) {
+	if e.loadedTypes[0] {
+		return e.ImplementationsProduct, nil
+	}
+	return nil, &NotLoadedError{edge: "implementationsProduct"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -77,6 +98,11 @@ func (pr *Product) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (pr *Product) Value(name string) (ent.Value, error) {
 	return pr.selectValues.Get(name)
+}
+
+// QueryImplementationsProduct queries the "implementationsProduct" edge of the Product entity.
+func (pr *Product) QueryImplementationsProduct() *ImplementationQuery {
+	return NewProductClient(pr.config).QueryImplementationsProduct(pr)
 }
 
 // Update returns a builder for updating this Product.

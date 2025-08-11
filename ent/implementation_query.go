@@ -9,6 +9,7 @@ import (
 	"math"
 	"requirements/ent/implementation"
 	"requirements/ent/predicate"
+	"requirements/ent/product"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent"
@@ -26,6 +27,8 @@ type ImplementationQuery struct {
 	inters           []Interceptor
 	predicates       []predicate.Implementation
 	withRequirements *RequirementQuery
+	withProducts     *ProductQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +80,28 @@ func (iq *ImplementationQuery) QueryRequirements() *RequirementQuery {
 			sqlgraph.From(implementation.Table, implementation.FieldID, selector),
 			sqlgraph.To(requirement.Table, requirement.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, implementation.RequirementsTable, implementation.RequirementsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProducts chains the current query on the "products" edge.
+func (iq *ImplementationQuery) QueryProducts() *ProductQuery {
+	query := (&ProductClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(implementation.Table, implementation.FieldID, selector),
+			sqlgraph.To(product.Table, product.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, implementation.ProductsTable, implementation.ProductsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
 		return fromU, nil
@@ -277,6 +302,7 @@ func (iq *ImplementationQuery) Clone() *ImplementationQuery {
 		inters:           append([]Interceptor{}, iq.inters...),
 		predicates:       append([]predicate.Implementation{}, iq.predicates...),
 		withRequirements: iq.withRequirements.Clone(),
+		withProducts:     iq.withProducts.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
@@ -291,6 +317,17 @@ func (iq *ImplementationQuery) WithRequirements(opts ...func(*RequirementQuery))
 		opt(query)
 	}
 	iq.withRequirements = query
+	return iq
+}
+
+// WithProducts tells the query-builder to eager-load the nodes that are connected to
+// the "products" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *ImplementationQuery) WithProducts(opts ...func(*ProductQuery)) *ImplementationQuery {
+	query := (&ProductClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withProducts = query
 	return iq
 }
 
@@ -371,11 +408,19 @@ func (iq *ImplementationQuery) prepareQuery(ctx context.Context) error {
 func (iq *ImplementationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Implementation, error) {
 	var (
 		nodes       = []*Implementation{}
+		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			iq.withRequirements != nil,
+			iq.withProducts != nil,
 		}
 	)
+	if iq.withProducts != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, implementation.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Implementation).scanValues(nil, columns)
 	}
@@ -398,6 +443,12 @@ func (iq *ImplementationQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		if err := iq.loadRequirements(ctx, query, nodes,
 			func(n *Implementation) { n.Edges.Requirements = []*Requirement{} },
 			func(n *Implementation, e *Requirement) { n.Edges.Requirements = append(n.Edges.Requirements, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := iq.withProducts; query != nil {
+		if err := iq.loadProducts(ctx, query, nodes, nil,
+			func(n *Implementation, e *Product) { n.Edges.Products = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -461,6 +512,38 @@ func (iq *ImplementationQuery) loadRequirements(ctx context.Context, query *Requ
 		}
 		for kn := range nodes {
 			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (iq *ImplementationQuery) loadProducts(ctx context.Context, query *ProductQuery, nodes []*Implementation, init func(*Implementation), assign func(*Implementation, *Product)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Implementation)
+	for i := range nodes {
+		if nodes[i].product_implementations_product == nil {
+			continue
+		}
+		fk := *nodes[i].product_implementations_product
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(product.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "product_implementations_product" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil

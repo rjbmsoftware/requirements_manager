@@ -26,6 +26,10 @@ func ImplementationSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 	apiGroup.PATCH(implementationIdUrl, impHandler.UpdateImplementation)
 }
 
+func (h *ImplementationsHandler) GetAllImplementations(c echo.Context) error {
+	return c.NoContent(http.StatusOK)
+}
+
 // @Summary		Get single implementation
 // @Description	Get a single implementation by id
 // @Tags		Implementation

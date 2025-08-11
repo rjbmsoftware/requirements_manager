@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"requirements/ent/implementation"
+	"requirements/ent/product"
 	"strings"
 
 	"entgo.io/ent"
@@ -23,17 +24,20 @@ type Implementation struct {
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ImplementationQuery when eager-loading is set.
-	Edges        ImplementationEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                           ImplementationEdges `json:"edges"`
+	product_implementations_product *uuid.UUID
+	selectValues                    sql.SelectValues
 }
 
 // ImplementationEdges holds the relations/edges for other nodes in the graph.
 type ImplementationEdges struct {
 	// Requirements holds the value of the requirements edge.
 	Requirements []*Requirement `json:"requirements,omitempty"`
+	// Products holds the value of the products edge.
+	Products *Product `json:"products,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // RequirementsOrErr returns the Requirements value or an error if the edge
@@ -45,6 +49,17 @@ func (e ImplementationEdges) RequirementsOrErr() ([]*Requirement, error) {
 	return nil, &NotLoadedError{edge: "requirements"}
 }
 
+// ProductsOrErr returns the Products value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ImplementationEdges) ProductsOrErr() (*Product, error) {
+	if e.Products != nil {
+		return e.Products, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: product.Label}
+	}
+	return nil, &NotLoadedError{edge: "products"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Implementation) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -54,6 +69,8 @@ func (*Implementation) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case implementation.FieldID:
 			values[i] = new(uuid.UUID)
+		case implementation.ForeignKeys[0]: // product_implementations_product
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -87,6 +104,13 @@ func (i *Implementation) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				i.Description = value.String
 			}
+		case implementation.ForeignKeys[0]:
+			if value, ok := values[j].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field product_implementations_product", values[j])
+			} else if value.Valid {
+				i.product_implementations_product = new(uuid.UUID)
+				*i.product_implementations_product = *value.S.(*uuid.UUID)
+			}
 		default:
 			i.selectValues.Set(columns[j], values[j])
 		}
@@ -103,6 +127,11 @@ func (i *Implementation) Value(name string) (ent.Value, error) {
 // QueryRequirements queries the "requirements" edge of the Implementation entity.
 func (i *Implementation) QueryRequirements() *RequirementQuery {
 	return NewImplementationClient(i.config).QueryRequirements(i)
+}
+
+// QueryProducts queries the "products" edge of the Implementation entity.
+func (i *Implementation) QueryProducts() *ProductQuery {
+	return NewImplementationClient(i.config).QueryProducts(i)
 }
 
 // Update returns a builder for updating this Implementation.

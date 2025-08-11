@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"requirements/ent/implementation"
 	"requirements/ent/predicate"
+	"requirements/ent/product"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent/dialect/sql"
@@ -72,6 +73,25 @@ func (iu *ImplementationUpdate) AddRequirements(r ...*Requirement) *Implementati
 	return iu.AddRequirementIDs(ids...)
 }
 
+// SetProductsID sets the "products" edge to the Product entity by ID.
+func (iu *ImplementationUpdate) SetProductsID(id uuid.UUID) *ImplementationUpdate {
+	iu.mutation.SetProductsID(id)
+	return iu
+}
+
+// SetNillableProductsID sets the "products" edge to the Product entity by ID if the given value is not nil.
+func (iu *ImplementationUpdate) SetNillableProductsID(id *uuid.UUID) *ImplementationUpdate {
+	if id != nil {
+		iu = iu.SetProductsID(*id)
+	}
+	return iu
+}
+
+// SetProducts sets the "products" edge to the Product entity.
+func (iu *ImplementationUpdate) SetProducts(p *Product) *ImplementationUpdate {
+	return iu.SetProductsID(p.ID)
+}
+
 // Mutation returns the ImplementationMutation object of the builder.
 func (iu *ImplementationUpdate) Mutation() *ImplementationMutation {
 	return iu.mutation
@@ -96,6 +116,12 @@ func (iu *ImplementationUpdate) RemoveRequirements(r ...*Requirement) *Implement
 		ids[i] = r[i].ID
 	}
 	return iu.RemoveRequirementIDs(ids...)
+}
+
+// ClearProducts clears the "products" edge to the Product entity.
+func (iu *ImplementationUpdate) ClearProducts() *ImplementationUpdate {
+	iu.mutation.ClearProducts()
+	return iu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -198,6 +224,35 @@ func (iu *ImplementationUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if iu.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   implementation.ProductsTable,
+			Columns: []string{implementation.ProductsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   implementation.ProductsTable,
+			Columns: []string{implementation.ProductsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{implementation.Label}
@@ -261,6 +316,25 @@ func (iuo *ImplementationUpdateOne) AddRequirements(r ...*Requirement) *Implemen
 	return iuo.AddRequirementIDs(ids...)
 }
 
+// SetProductsID sets the "products" edge to the Product entity by ID.
+func (iuo *ImplementationUpdateOne) SetProductsID(id uuid.UUID) *ImplementationUpdateOne {
+	iuo.mutation.SetProductsID(id)
+	return iuo
+}
+
+// SetNillableProductsID sets the "products" edge to the Product entity by ID if the given value is not nil.
+func (iuo *ImplementationUpdateOne) SetNillableProductsID(id *uuid.UUID) *ImplementationUpdateOne {
+	if id != nil {
+		iuo = iuo.SetProductsID(*id)
+	}
+	return iuo
+}
+
+// SetProducts sets the "products" edge to the Product entity.
+func (iuo *ImplementationUpdateOne) SetProducts(p *Product) *ImplementationUpdateOne {
+	return iuo.SetProductsID(p.ID)
+}
+
 // Mutation returns the ImplementationMutation object of the builder.
 func (iuo *ImplementationUpdateOne) Mutation() *ImplementationMutation {
 	return iuo.mutation
@@ -285,6 +359,12 @@ func (iuo *ImplementationUpdateOne) RemoveRequirements(r ...*Requirement) *Imple
 		ids[i] = r[i].ID
 	}
 	return iuo.RemoveRequirementIDs(ids...)
+}
+
+// ClearProducts clears the "products" edge to the Product entity.
+func (iuo *ImplementationUpdateOne) ClearProducts() *ImplementationUpdateOne {
+	iuo.mutation.ClearProducts()
+	return iuo
 }
 
 // Where appends a list predicates to the ImplementationUpdate builder.
@@ -410,6 +490,35 @@ func (iuo *ImplementationUpdateOne) sqlSave(ctx context.Context) (_node *Impleme
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(requirement.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iuo.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   implementation.ProductsTable,
+			Columns: []string{implementation.ProductsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   implementation.ProductsTable,
+			Columns: []string{implementation.ProductsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

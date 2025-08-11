@@ -43,6 +43,8 @@ type ImplementationMutation struct {
 	requirements        map[uuid.UUID]struct{}
 	removedrequirements map[uuid.UUID]struct{}
 	clearedrequirements bool
+	products            *uuid.UUID
+	clearedproducts     bool
 	done                bool
 	oldValue            func(context.Context) (*Implementation, error)
 	predicates          []predicate.Implementation
@@ -278,6 +280,45 @@ func (m *ImplementationMutation) ResetRequirements() {
 	m.removedrequirements = nil
 }
 
+// SetProductsID sets the "products" edge to the Product entity by id.
+func (m *ImplementationMutation) SetProductsID(id uuid.UUID) {
+	m.products = &id
+}
+
+// ClearProducts clears the "products" edge to the Product entity.
+func (m *ImplementationMutation) ClearProducts() {
+	m.clearedproducts = true
+}
+
+// ProductsCleared reports if the "products" edge to the Product entity was cleared.
+func (m *ImplementationMutation) ProductsCleared() bool {
+	return m.clearedproducts
+}
+
+// ProductsID returns the "products" edge ID in the mutation.
+func (m *ImplementationMutation) ProductsID() (id uuid.UUID, exists bool) {
+	if m.products != nil {
+		return *m.products, true
+	}
+	return
+}
+
+// ProductsIDs returns the "products" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProductsID instead. It exists only for internal usage by the builders.
+func (m *ImplementationMutation) ProductsIDs() (ids []uuid.UUID) {
+	if id := m.products; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProducts resets all changes to the "products" edge.
+func (m *ImplementationMutation) ResetProducts() {
+	m.products = nil
+	m.clearedproducts = false
+}
+
 // Where appends a list predicates to the ImplementationMutation builder.
 func (m *ImplementationMutation) Where(ps ...predicate.Implementation) {
 	m.predicates = append(m.predicates, ps...)
@@ -428,9 +469,12 @@ func (m *ImplementationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ImplementationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.requirements != nil {
 		edges = append(edges, implementation.EdgeRequirements)
+	}
+	if m.products != nil {
+		edges = append(edges, implementation.EdgeProducts)
 	}
 	return edges
 }
@@ -445,13 +489,17 @@ func (m *ImplementationMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case implementation.EdgeProducts:
+		if id := m.products; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ImplementationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedrequirements != nil {
 		edges = append(edges, implementation.EdgeRequirements)
 	}
@@ -474,9 +522,12 @@ func (m *ImplementationMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ImplementationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedrequirements {
 		edges = append(edges, implementation.EdgeRequirements)
+	}
+	if m.clearedproducts {
+		edges = append(edges, implementation.EdgeProducts)
 	}
 	return edges
 }
@@ -487,6 +538,8 @@ func (m *ImplementationMutation) EdgeCleared(name string) bool {
 	switch name {
 	case implementation.EdgeRequirements:
 		return m.clearedrequirements
+	case implementation.EdgeProducts:
+		return m.clearedproducts
 	}
 	return false
 }
@@ -495,6 +548,9 @@ func (m *ImplementationMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *ImplementationMutation) ClearEdge(name string) error {
 	switch name {
+	case implementation.EdgeProducts:
+		m.ClearProducts()
+		return nil
 	}
 	return fmt.Errorf("unknown Implementation unique edge %s", name)
 }
@@ -506,6 +562,9 @@ func (m *ImplementationMutation) ResetEdge(name string) error {
 	case implementation.EdgeRequirements:
 		m.ResetRequirements()
 		return nil
+	case implementation.EdgeProducts:
+		m.ResetProducts()
+		return nil
 	}
 	return fmt.Errorf("unknown Implementation edge %s", name)
 }
@@ -513,15 +572,18 @@ func (m *ImplementationMutation) ResetEdge(name string) error {
 // ProductMutation represents an operation that mutates the Product nodes in the graph.
 type ProductMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	description   *string
-	title         *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Product, error)
-	predicates    []predicate.Product
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	description                   *string
+	title                         *string
+	clearedFields                 map[string]struct{}
+	implementationsProduct        map[uuid.UUID]struct{}
+	removedimplementationsProduct map[uuid.UUID]struct{}
+	clearedimplementationsProduct bool
+	done                          bool
+	oldValue                      func(context.Context) (*Product, error)
+	predicates                    []predicate.Product
 }
 
 var _ ent.Mutation = (*ProductMutation)(nil)
@@ -700,6 +762,60 @@ func (m *ProductMutation) ResetTitle() {
 	m.title = nil
 }
 
+// AddImplementationsProductIDs adds the "implementationsProduct" edge to the Implementation entity by ids.
+func (m *ProductMutation) AddImplementationsProductIDs(ids ...uuid.UUID) {
+	if m.implementationsProduct == nil {
+		m.implementationsProduct = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.implementationsProduct[ids[i]] = struct{}{}
+	}
+}
+
+// ClearImplementationsProduct clears the "implementationsProduct" edge to the Implementation entity.
+func (m *ProductMutation) ClearImplementationsProduct() {
+	m.clearedimplementationsProduct = true
+}
+
+// ImplementationsProductCleared reports if the "implementationsProduct" edge to the Implementation entity was cleared.
+func (m *ProductMutation) ImplementationsProductCleared() bool {
+	return m.clearedimplementationsProduct
+}
+
+// RemoveImplementationsProductIDs removes the "implementationsProduct" edge to the Implementation entity by IDs.
+func (m *ProductMutation) RemoveImplementationsProductIDs(ids ...uuid.UUID) {
+	if m.removedimplementationsProduct == nil {
+		m.removedimplementationsProduct = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.implementationsProduct, ids[i])
+		m.removedimplementationsProduct[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedImplementationsProduct returns the removed IDs of the "implementationsProduct" edge to the Implementation entity.
+func (m *ProductMutation) RemovedImplementationsProductIDs() (ids []uuid.UUID) {
+	for id := range m.removedimplementationsProduct {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ImplementationsProductIDs returns the "implementationsProduct" edge IDs in the mutation.
+func (m *ProductMutation) ImplementationsProductIDs() (ids []uuid.UUID) {
+	for id := range m.implementationsProduct {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetImplementationsProduct resets all changes to the "implementationsProduct" edge.
+func (m *ProductMutation) ResetImplementationsProduct() {
+	m.implementationsProduct = nil
+	m.clearedimplementationsProduct = false
+	m.removedimplementationsProduct = nil
+}
+
 // Where appends a list predicates to the ProductMutation builder.
 func (m *ProductMutation) Where(ps ...predicate.Product) {
 	m.predicates = append(m.predicates, ps...)
@@ -850,49 +966,85 @@ func (m *ProductMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProductMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.implementationsProduct != nil {
+		edges = append(edges, product.EdgeImplementationsProduct)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *ProductMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case product.EdgeImplementationsProduct:
+		ids := make([]ent.Value, 0, len(m.implementationsProduct))
+		for id := range m.implementationsProduct {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProductMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedimplementationsProduct != nil {
+		edges = append(edges, product.EdgeImplementationsProduct)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ProductMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case product.EdgeImplementationsProduct:
+		ids := make([]ent.Value, 0, len(m.removedimplementationsProduct))
+		for id := range m.removedimplementationsProduct {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProductMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedimplementationsProduct {
+		edges = append(edges, product.EdgeImplementationsProduct)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *ProductMutation) EdgeCleared(name string) bool {
+	switch name {
+	case product.EdgeImplementationsProduct:
+		return m.clearedimplementationsProduct
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *ProductMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Product unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *ProductMutation) ResetEdge(name string) error {
+	switch name {
+	case product.EdgeImplementationsProduct:
+		m.ResetImplementationsProduct()
+		return nil
+	}
 	return fmt.Errorf("unknown Product edge %s", name)
 }
 

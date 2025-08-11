@@ -16,7 +16,7 @@ type Requirement struct {
 func (Requirement) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("title").NotEmpty(),
-		field.String("path").NotEmpty(),
+		field.String("path").NotEmpty().Unique(),
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("description").Default(""),
 	}

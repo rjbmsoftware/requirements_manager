@@ -13,12 +13,21 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "url", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Default: ""},
+		{Name: "product_implementations_product", Type: field.TypeUUID, Nullable: true},
 	}
 	// ImplementationsTable holds the schema information for the "implementations" table.
 	ImplementationsTable = &schema.Table{
 		Name:       "implementations",
 		Columns:    ImplementationsColumns,
 		PrimaryKey: []*schema.Column{ImplementationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "implementations_products_implementationsProduct",
+				Columns:    []*schema.Column{ImplementationsColumns[3]},
+				RefColumns: []*schema.Column{ProductsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ProductsColumns holds the columns for the "products" table.
 	ProductsColumns = []*schema.Column{
@@ -36,7 +45,7 @@ var (
 	RequirementsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "title", Type: field.TypeString},
-		{Name: "path", Type: field.TypeString},
+		{Name: "path", Type: field.TypeString, Unique: true},
 		{Name: "description", Type: field.TypeString, Default: ""},
 	}
 	// RequirementsTable holds the schema information for the "requirements" table.
@@ -80,6 +89,7 @@ var (
 )
 
 func init() {
+	ImplementationsTable.ForeignKeys[0].RefTable = ProductsTable
 	RequirementImplementationsTable.ForeignKeys[0].RefTable = RequirementsTable
 	RequirementImplementationsTable.ForeignKeys[1].RefTable = ImplementationsTable
 }

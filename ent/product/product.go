@@ -4,6 +4,7 @@ package product
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -16,8 +17,17 @@ const (
 	FieldDescription = "description"
 	// FieldTitle holds the string denoting the title field in the database.
 	FieldTitle = "title"
+	// EdgeImplementationsProduct holds the string denoting the implementationsproduct edge name in mutations.
+	EdgeImplementationsProduct = "implementationsProduct"
 	// Table holds the table name of the product in the database.
 	Table = "products"
+	// ImplementationsProductTable is the table that holds the implementationsProduct relation/edge.
+	ImplementationsProductTable = "implementations"
+	// ImplementationsProductInverseTable is the table name for the Implementation entity.
+	// It exists in this package in order to avoid circular dependency with the "implementation" package.
+	ImplementationsProductInverseTable = "implementations"
+	// ImplementationsProductColumn is the table column denoting the implementationsProduct relation/edge.
+	ImplementationsProductColumn = "product_implementations_product"
 )
 
 // Columns holds all SQL columns for product fields.
@@ -62,4 +72,25 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByTitle orders the results by the title field.
 func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTitle, opts...).ToFunc()
+}
+
+// ByImplementationsProductCount orders the results by implementationsProduct count.
+func ByImplementationsProductCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newImplementationsProductStep(), opts...)
+	}
+}
+
+// ByImplementationsProduct orders the results by implementationsProduct terms.
+func ByImplementationsProduct(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newImplementationsProductStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newImplementationsProductStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ImplementationsProductInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ImplementationsProductTable, ImplementationsProductColumn),
+	)
 }

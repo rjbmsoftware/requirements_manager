@@ -19,3 +19,7 @@ func PathParamUuidValidation(c echo.Context, name string) (uuid.UUID, error) {
 
 	return output, nil
 }
+
+func ErrorMessageMap(message string) map[string]string {
+	return map[string]string{"error": message}
+}

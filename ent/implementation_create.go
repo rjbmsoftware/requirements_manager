@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"requirements/ent/implementation"
+	"requirements/ent/product"
 	"requirements/ent/requirement"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -68,6 +69,25 @@ func (ic *ImplementationCreate) AddRequirements(r ...*Requirement) *Implementati
 		ids[i] = r[i].ID
 	}
 	return ic.AddRequirementIDs(ids...)
+}
+
+// SetProductsID sets the "products" edge to the Product entity by ID.
+func (ic *ImplementationCreate) SetProductsID(id uuid.UUID) *ImplementationCreate {
+	ic.mutation.SetProductsID(id)
+	return ic
+}
+
+// SetNillableProductsID sets the "products" edge to the Product entity by ID if the given value is not nil.
+func (ic *ImplementationCreate) SetNillableProductsID(id *uuid.UUID) *ImplementationCreate {
+	if id != nil {
+		ic = ic.SetProductsID(*id)
+	}
+	return ic
+}
+
+// SetProducts sets the "products" edge to the Product entity.
+func (ic *ImplementationCreate) SetProducts(p *Product) *ImplementationCreate {
+	return ic.SetProductsID(p.ID)
 }
 
 // Mutation returns the ImplementationMutation object of the builder.
@@ -185,6 +205,23 @@ func (ic *ImplementationCreate) createSpec() (*Implementation, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ic.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   implementation.ProductsTable,
+			Columns: []string{implementation.ProductsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.product_implementations_product = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
