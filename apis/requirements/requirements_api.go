@@ -29,6 +29,8 @@ func RequirementSetup(apiGroup *echo.Group, dbClient *ent.Client) {
 	apiGroup.POST(requirementUrl, handler.CreateRequirement)
 }
 
+func StringForNextToken(req *ent.Requirement) string { return req.Path }
+
 type GetAllRequirementsResponse struct {
 	NextToken string             `json:"nextToken"`
 	Data      []*ent.Requirement `json:"data"`
@@ -65,13 +67,7 @@ func (h *Handler) GetAllRequirements(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, message)
 	}
 
-	titles := make([]string, len(reqs))
-	for i, v := range reqs {
-		titles[i] = v.Title
-	}
-
-	nextToken := GenerateNextToken(titles, pageSize)
-	// nextToken := GenerateNextToken(reqs, pageSize)
+	nextToken := utils.GenerateNextToken(reqs, StringForNextToken, pageSize)
 
 	maxRequirements := min(pageSize, len(reqs))
 	allReqs := GetAllRequirementsResponse{

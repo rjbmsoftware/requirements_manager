@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -22,4 +23,13 @@ func PathParamUuidValidation(c echo.Context, name string) (uuid.UUID, error) {
 
 func ErrorMessageMap(message string) map[string]string {
 	return map[string]string{"error": message}
+}
+
+func GenerateNextToken[T any](reqs []*T, generateTokenFrom func(*T) string, pageSize int) string {
+	if len(reqs) <= 0 || len(reqs) <= pageSize {
+		return ""
+	}
+
+	lastPath := []byte(generateTokenFrom(reqs[len(reqs)-1]))
+	return base64.URLEncoding.EncodeToString(lastPath)
 }
