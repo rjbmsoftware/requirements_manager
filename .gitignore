@@ -33,3 +33,5 @@ go.work.sum
 
 # sqlite db
 requirements.db
+
+test_data_files/
